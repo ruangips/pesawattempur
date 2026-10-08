@@ -19,7 +19,7 @@
     display: flex; flex-direction: column;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
   }
-  /* ── AREA KANVAS (mengisi tinggi tersisa) ── */
+  /* ── AREA KANVAS (mengisi seluruh tinggi sekarang) ── */
   #gameWrap {
     flex: 1 1 auto;
     min-height: 0;
@@ -31,74 +31,11 @@
     display: block;
     border-radius: 8px;
     box-shadow: 0 0 60px rgba(0, 240, 255, 0.35);
-    cursor: crosshair; touch-action: none; user-select: none; -webkit-user-select: none;
+    cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none;
     max-width: 100%; max-height: 100%;
   }
   @media (max-width: 900px) {
     canvas { border-radius: 0; box-shadow: none; }
-  }
-
-  /* ═══ BAR KONTROL MOBILE — bukan overlay, layout flex ═══ */
-  #mobileControls {
-    display: none;
-    flex: 0 0 auto;
-    height: clamp(78px, 13vh, 100px);
-    padding: 6px 14px calc(env(safe-area-inset-bottom, 0px) + 8px) 14px;
-    background: linear-gradient(180deg, rgba(6,1,15,0) 0%, rgba(6,1,15,0.7) 30%, rgba(6,1,15,0.95) 100%);
-    z-index: 100;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 12px;
-    pointer-events: auto;
-  }
-  .ctrlGroup { display: flex; gap: 14px; align-items: flex-end; }
-  .ctrlBtn {
-    width: clamp(50px, 7.2vh, 62px);
-    height: clamp(50px, 7.2vh, 62px);
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(0, 240, 255, 0.22), rgba(255, 68, 34, 0.22));
-    border: 2px solid rgba(0, 240, 255, 0.75);
-    color: #00f0ff; font-size: clamp(20px, 3vh, 26px); font-weight: bold;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 0 18px rgba(0, 240, 255, 0.4);
-    transition: transform 0.08s, box-shadow 0.08s;
-    user-select: none; -webkit-user-select: none;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-  }
-  .ctrlBtn:active {
-    transform: scale(0.88);
-    box-shadow: 0 0 28px rgba(0, 240, 255, 0.95);
-    background: linear-gradient(135deg, rgba(0, 240, 255, 0.6), rgba(255, 68, 34, 0.5));
-  }
-  .fireBtns {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: clamp(6px, 1vh, 10px);
-    align-items: flex-end;
-  }
-  .fireBtn {
-    width: clamp(50px, 7.2vh, 62px);
-    height: clamp(50px, 7.2vh, 62px);
-    border-radius: 14px;
-    background: linear-gradient(135deg, rgba(255, 68, 34, 0.28), rgba(176, 64, 255, 0.28));
-    border: 2px solid rgba(255, 68, 34, 0.8);
-    color: #ffcc99; font-size: clamp(18px, 2.8vh, 24px); font-weight: bold;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 0 18px rgba(255, 68, 34, 0.4);
-    font-family: 'Consolas', monospace;
-    transition: transform 0.08s, box-shadow 0.08s;
-    user-select: none; -webkit-user-select: none;
-  }
-  .fireBtn:active {
-    transform: scale(0.88);
-    box-shadow: 0 0 28px rgba(255, 68, 34, 0.95);
-    background: linear-gradient(135deg, rgba(255, 68, 34, 0.6), rgba(176, 64, 255, 0.5));
-  }
-  /* Tampilkan bar kontrol HANYA di perangkat sentuh */
-  @media (hover: none) and (pointer: coarse) {
-    #mobileControls { display: flex; }
   }
 
   /* ═══ OVERLAY PUTAR PERANGKAT ═══ */
@@ -179,8 +116,7 @@
   }
 
   body.portrait-locked #rotateOverlay { display: flex; }
-  body.portrait-locked #gameWrap,
-  body.portrait-locked #mobileControls { display: none !important; }
+  body.portrait-locked #gameWrap { display: none !important; }
 </style>
 </head>
 <body>
@@ -203,34 +139,19 @@
   <canvas id="game" width="1200" height="720"></canvas>
 </div>
 
-<!-- ═══ BAR KONTROL MOBILE ═══ -->
-<div id="mobileControls">
-  <div class="ctrlGroup">
-    <div class="ctrlBtn" id="btnLeft">◀</div>
-    <div class="ctrlBtn" id="btnRight">▶</div>
-  </div>
-  <div class="fireBtns">
-    <div class="fireBtn" data-opt="0">1</div>
-    <div class="fireBtn" data-opt="1">2</div>
-    <div class="fireBtn" data-opt="2">3</div>
-    <div class="fireBtn" data-opt="3">4</div>
-  </div>
-</div>
-
 <script>
 'use strict';
 
 const cvs = document.getElementById('game');
 const ctx = cvs.getContext('2d');
 
-/* ═══ RESOLUSI DINAMIS ═══
-   H tetap sebagai acuan tinggi gameplay.
-   W dihitung dari rasio viewport → canvas selalu memenuhi layar. */
+/* ═══ RESOLUSI DINAMIS ═══ */
 const BASE_H = 720;
 let W = 1200, H = BASE_H;
 
 /* ═══ KONFIGURASI LEVEL ═══ */
-const MAX_LEVEL = 10;
+const MAX_LEVEL = 10;                 // 10 level
+const QUESTIONS_PER_LEVEL = 4;        // 4 soal per level
 const MAX_WRONG_PER_ROUND = 2;
 
 const C = {
@@ -289,13 +210,11 @@ function fs(n, cap) { return Math.round(n * Math.min(uiScale, cap || 1.65)); }
 function applyLayout() {
   const u = uiScale;
 
-  /* Panel pertanyaan — proporsional ke W */
   QP_X = W * 0.10 - 10 * (u - 1);
   QP_W = W - QP_X * 2;
   QP_Y = 60 + 12 * u;
   QP_H = 118 + 32 * (u - 1);
 
-  /* Zona pesawat musuh & panel jawaban */
   SHIP_Y_START = QP_Y + QP_H + 26;
   PANEL_H = 60 + 26 * u;
   PANEL_BELOW_GAP = 52 + PANEL_H / 2;
@@ -304,10 +223,7 @@ function applyLayout() {
   if (SHIP_Y_END < SHIP_Y_START + 90) SHIP_Y_END = SHIP_Y_START + 90;
   SHIP_TOTAL_DESCENT = SHIP_Y_END - SHIP_Y_START;
 
-  /* 4 kolom tersebar proporsional */
   COL_X = [W * 0.125, W * 0.375, W * 0.625, W * 0.875];
-
-  /* Panel jawaban — jangan lebih lebar dari jarak antar kolom */
   PANEL_W = Math.min(288, W * 0.22);
 }
 
@@ -327,7 +243,6 @@ function resize() {
     return;
   }
 
-  /* 1) Hitung resolusi internal berdasar rasio viewport (clamp 1.4 – 2.8) */
   const aspect = clamp(vw / vh, 1.4, 2.8);
   const newW = Math.round(BASE_H * aspect);
   if (Math.abs(newW - W) > 20) {
@@ -336,20 +251,16 @@ function resize() {
     if (bgReady) initBackground();
   }
 
-  /* 2) Skala tampilan — fill penuh */
   const padding = 0.998;
   const s = Math.min(vw / W, vh / H) * padding;
   viewScale = s;
 
-  /* 3) UI scale — teks di dalam canvas menyesuaikan */
   uiScale = clamp(0.86 / s, 1, 1.75);
 
-  /* 4) DPR adaptif */
   dpr = Math.min(window.devicePixelRatio || 1, 2);
   const maxW = 3600;
   if (W * s * dpr > maxW) dpr = Math.max(1, maxW / (W * s));
 
-  /* 5) Terapkan ke canvas */
   cvs.style.width  = (W * s) + 'px';
   cvs.style.height = (H * s) + 'px';
   cvs.width  = Math.max(2, Math.round(W * s * dpr));
@@ -513,6 +424,7 @@ const player = {
   enginePulse: 0, shieldPhase: 0,
   weaponLevel: 1, overdrive: 0, invuln: 0,
   tier: 1, tierFlash: 0,
+  autoT: 0,   // waktu patroli auto-move
 };
 
 const qShip = {
@@ -756,6 +668,7 @@ function resetGame() {
   player.vx = 0; player.bank = 0;
   player.weaponLevel = 1; player.overdrive = 0; player.invuln = 1.5;
   player.tier = 1; player.tierFlash = 0;
+  player.autoT = 0;
   questionPool = shuffle([...QUESTIONS]);
   enemies = []; bullets = []; particles = [];
   shockwaves = []; debris = []; popups = []; engineTrails = [];
@@ -1038,13 +951,13 @@ function resolveHit(bullet, enemy) {
     state.roundActive = false;
     state.nextRoundIn = 1.35;
 
-    /* ── CEK MENANG: selesai 10 level ── */
-    if (state.correctCount >= MAX_LEVEL * 4) {
+    /* ── CEK MENANG: 10 level × 4 soal ── */
+    if (state.correctCount >= MAX_LEVEL * QUESTIONS_PER_LEVEL) {
       triggerVictory();
       return;
     }
 
-    const newLevel = Math.floor(state.correctCount / 4) + 1;
+    const newLevel = Math.floor(state.correctCount / QUESTIONS_PER_LEVEL) + 1;
     if (newLevel > state.level) {
       state.level = Math.min(MAX_LEVEL, newLevel);
       toast(`◆ LEVEL ${state.level} / ${MAX_LEVEL} ◆`, C.amber);
@@ -1059,7 +972,6 @@ function resolveHit(bullet, enemy) {
     state.wrongThisRound++;
     enemy.launching = true; enemy.launchVy = 400; enemy.panelFlash = 0.5;
 
-    /* ── SOLUSI: 2× salah = pertanyaan gagal ── */
     if (state.wrongThisRound >= MAX_WRONG_PER_ROUND && !state.questionFailed) {
       failQuestion();
       return;
@@ -1102,10 +1014,8 @@ function failQuestion() {
   state.roundActive = false;
   state.locked = true;
 
-  /* Cari musuh dengan jawaban BENAR */
   const correctEnemy = enemies.find(e => e.correct && e.alive && !e.launching && !e.fleeing);
 
-  /* Musuh lain kabur */
   enemies.forEach(o => {
     if (o === correctEnemy) return;
     if (o.alive && o.dying <= 0 && !o.launching && !o.fleeing) {
@@ -1118,7 +1028,6 @@ function failQuestion() {
     }
   });
 
-  /* Highlight jawaban benar */
   if (correctEnemy) {
     correctEnemy.panelFlash = 1.5;
     correctEnemy.flash = 0.6;
@@ -1129,7 +1038,6 @@ function failQuestion() {
     popup(correctEnemy.x, correctEnemy.y - 90, '✓ JAWABAN BENAR', C.lime, 28);
   }
 
-  /* Penalti */
   state.hp--;
   state.flashRed = 0.9;
   state.shake = 14;
@@ -1225,7 +1133,7 @@ function timeUp() {
     toast('💥 SKUADRON F16 MENEROBOS! Perisai jatuh!', C.amber);
   } else {
     state.hp--;
-    toast('💥 SKUADRONE F16 MENEROBOS! -1 Energi', C.pink);
+    toast('💥 SKUADRON F16 MENEROBOS! -1 Energi', C.pink);
   }
   state.streak = 0;
   state.comboMeter = Math.max(0, state.comboMeter - 40);
@@ -1255,6 +1163,15 @@ function update(dt) {
     if (o.y - o.size * 2 > H) spaceObjects[i] = makeSpaceObject(true);
   }
 
+  /* ═══ AUTO-MOVE PESAWAT PEMAIN ═══
+     Pesawat bergerak otomatis kiri–kanan dengan pola sinus (patroli).
+     Tidak mempengaruhi tembakan — peluru selalu homing ke target. */
+  player.autoT += dt;
+  const patrolRange = W * 0.42;
+  const patrolSpeed = 0.9;  // rad/s → periode ± 7 detik untuk 1 siklus penuh
+  player.targetX = W / 2 + Math.sin(player.autoT * patrolSpeed) * patrolRange;
+
+  /* Smooth follow */
   const dx = player.targetX - player.x;
   player.vx = lerp(player.vx, dx * 10, Math.min(1, dt * 12));
   player.x = lerp(player.x, player.targetX, Math.min(1, dt * 12));
@@ -1963,11 +1880,13 @@ function drawQuestionPanel() {
   ctx.fillRect(panelX + 4, scanY - 20, panelW - 8, 40);
   ctx.restore();
 
+  /* Header dengan info Soal X/4 */
+  const qNum = (state.correctCount % QUESTIONS_PER_LEVEL) + 1;
   ctx.font = `bold ${fHead}px "Consolas", monospace`;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillStyle = C.magenta;
   ctx.shadowColor = C.magenta; ctx.shadowBlur = 10;
-  ctx.fillText(`◈ PERTANYAAN  ·  LEVEL ${state.level}/${MAX_LEVEL}`, panelX + 26, panelY + 12);
+  ctx.fillText(`◈ SOAL ${qNum}/${QUESTIONS_PER_LEVEL}  ·  LEVEL ${state.level}/${MAX_LEVEL}`, panelX + 26, panelY + 12);
   ctx.shadowBlur = 0;
 
   const pulse = 0.5 + Math.sin(state.gameTime * 5) * 0.5;
@@ -2710,7 +2629,6 @@ function drawEnemyPanel(e) {
     ctx.restore();
   }
 
-  /* Highlight jawaban benar saat soal gagal */
   if (state.questionFailed && e.correct && e.alive) {
     ctx.save();
     const pulse = 0.6 + Math.sin(state.gameTime * 8) * 0.4;
@@ -3267,7 +3185,7 @@ function drawHUD() {
     ctx.fill(); ctx.shadowBlur = 0;
   }
 
-  /* Combo meter di bawah tengah */
+  /* Combo meter */
   const cmW = 190 * u, cmH = 9 * u;
   const cmX = (W - cmW) / 2;
   const cmY = by + bh + 6;
@@ -3365,7 +3283,7 @@ function drawMenu() {
 
   ctx.font = `bold ${Math.round(14 * mu)}px system-ui, sans-serif`;
   ctx.fillStyle = hex2rgba(C.white, 0.78);
-  ctx.fillText('⚡  10 LEVEL  ·  1914–1918  ·  Hancurkan 4 Skuadron F16!  ⚡', W/2, 244);
+  ctx.fillText('⚡  10 LEVEL × 4 SOAL  ·  1914–1918  ·  Hancurkan Skuadron F16!  ⚡', W/2, 244);
 
   const panelY = 274, panelH = 316;
   const lx = W * 0.05;
@@ -3389,9 +3307,9 @@ function drawMenu() {
   ctx.shadowBlur = 0;
 
   const rules = [
-    ['1 / 2 / 3 / 4', 'Tembak jawaban di layar'],
-    ['KLIK / TAP', 'Tembak pesawat F16 langsung'],
-    ['◀ ▶', 'Geser pesawat kiri / kanan'],
+    ['TAP PESAWAT', 'Ketuk pesawat dengan jawaban benar'],
+    ['TAP PANEL', 'Ketuk panel jawaban untuk menembak'],
+    ['AUTO-MOVE', 'Pesawat penembak bergerak otomatis'],
     ['[SPASI]', 'Mulai / Ulangi permainan'],
   ];
   const keyBoxW = 168 * mu;
@@ -3738,106 +3656,45 @@ function handleStart() {
   }
 }
 
-let pointerDown = false;
-let dragTargetX = null;
-
+/* TAP / KLIK = tembak pesawat atau panel jawaban */
 cvs.addEventListener('pointerdown', (evt) => {
   evt.preventDefault();
   initAudio();
-  pointerDown = true;
-  const { x, y } = canvasCoords(evt.clientX, evt.clientY);
   if (state.mode !== 'playing') { handleStart(); return; }
-  if (!state.locked && state.roundActive) {
-    let hit = false;
-    for (let i = 0; i < enemies.length; i++) {
-      const e = enemies[i];
-      if (!e.alive || e.dying > 0 || e.launching || e.fleeing) continue;
-      const inShip = x >= e.x - 62 && x <= e.x + 62 && y >= e.y - 60 && y <= e.y + 60;
-      const panelCY = e.y + PANEL_BELOW_GAP;
-      const inPanel = x >= e.x - PANEL_W/2 - 14 && x <= e.x + PANEL_W/2 + 14
-                   && y >= panelCY - PANEL_H/2 - 14 && y <= panelCY + PANEL_H/2 + 14;
-      if (inShip || inPanel) { fire(i); hit = true; return; }
-    }
-    if (!hit) {
-      dragTargetX = clamp(x, 80, W - 80);
-      player.targetX = dragTargetX;
-    }
-  } else {
-    dragTargetX = clamp(x, 80, W - 80);
-    player.targetX = dragTargetX;
+  if (state.locked || !state.roundActive) return;
+
+  const { x, y } = canvasCoords(evt.clientX, evt.clientY);
+
+  /* Cari musuh yang tersentuh (hitbox diperbesar sedikit biar mudah di-tap) */
+  for (let i = 0; i < enemies.length; i++) {
+    const e = enemies[i];
+    if (!e.alive || e.dying > 0 || e.launching || e.fleeing) continue;
+
+    const shipR = 75;
+    const inShip = x >= e.x - shipR && x <= e.x + shipR
+                && y >= e.y - shipR && y <= e.y + shipR;
+
+    const panelCY = e.y + PANEL_BELOW_GAP;
+    const inPanel = x >= e.x - PANEL_W / 2 - 24 && x <= e.x + PANEL_W / 2 + 24
+                 && y >= panelCY - PANEL_H / 2 - 20 && y <= panelCY + PANEL_H / 2 + 20;
+
+    if (inShip || inPanel) { fire(i); return; }
   }
 }, { passive: false });
 
-cvs.addEventListener('pointermove', (evt) => {
-  if (state.mode !== 'playing') return;
-  const { x } = canvasCoords(evt.clientX, evt.clientY);
-  if (pointerDown) { dragTargetX = clamp(x, 80, W - 80); player.targetX = dragTargetX; }
-  else { player.targetX = clamp(x, 80, W - 80); }
-}, { passive: false });
+/* Cegah default gesture pada canvas */
+cvs.addEventListener('contextmenu', (e) => e.preventDefault());
 
-cvs.addEventListener('pointerup', () => { pointerDown = false; dragTargetX = null; });
-cvs.addEventListener('pointercancel', () => { pointerDown = false; dragTargetX = null; });
-cvs.addEventListener('pointerleave', () => { pointerDown = false; dragTargetX = null; });
-
+/* Keyboard — hanya Space / Enter untuk mulai atau restart */
 window.addEventListener('keydown', (evt) => {
   initAudio();
   if (evt.code === 'Space' || evt.code === 'Enter') {
     evt.preventDefault();
     if (state.mode !== 'playing') handleStart();
-    return;
-  }
-  if (state.mode === 'playing') {
-    if (evt.code === 'ArrowLeft' || evt.code === 'KeyA') {
-      player.targetX = clamp(player.targetX - 60, 80, W - 80);
-      evt.preventDefault();
-    } else if (evt.code === 'ArrowRight' || evt.code === 'KeyD') {
-      player.targetX = clamp(player.targetX + 60, 80, W - 80);
-      evt.preventDefault();
-    }
-    const keyMap = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3 };
-    if (evt.code in keyMap) { evt.preventDefault(); fire(keyMap[evt.code]); }
   }
 });
 
-/* Tombol gerak kiri/kanan */
-const btnLeft = document.getElementById('btnLeft');
-const btnRight = document.getElementById('btnRight');
-
-function setMoveBtn(btn, dir) {
-  let interval = null;
-  const startMove = (e) => {
-    e.preventDefault();
-    initAudio();
-    const step = () => { player.targetX = clamp(player.targetX + dir * 40, 80, W - 80); };
-    step();
-    interval = setInterval(step, 90);
-  };
-  const stopMove = () => { if (interval) { clearInterval(interval); interval = null; } };
-  btn.addEventListener('touchstart', startMove, { passive: false });
-  btn.addEventListener('touchend', stopMove, { passive: false });
-  btn.addEventListener('touchcancel', stopMove, { passive: false });
-  btn.addEventListener('mousedown', startMove);
-  btn.addEventListener('mouseup', stopMove);
-  btn.addEventListener('mouseleave', stopMove);
-}
-if (btnLeft) setMoveBtn(btnLeft, -1);
-if (btnRight) setMoveBtn(btnRight, 1);
-
-/* Tombol api 1-4 */
-document.querySelectorAll('.fireBtn').forEach((btn) => {
-  const opt = parseInt(btn.getAttribute('data-opt'), 10);
-  const doFire = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    initAudio();
-    if (state.mode !== 'playing') { handleStart(); return; }
-    fire(opt);
-  };
-  btn.addEventListener('touchstart', doFire, { passive: false });
-  btn.addEventListener('mousedown', doFire);
-});
-
-window.addEventListener('blur', () => { lastTs = 0; pointerDown = false; dragTargetX = null; });
+window.addEventListener('blur', () => { lastTs = 0; });
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
 document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
