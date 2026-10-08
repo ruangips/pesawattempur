@@ -31,10 +31,14 @@
   @media (max-width: 900px) {
     canvas { border-radius: 0; box-shadow: 0 0 60px rgba(0, 240, 255, 0.3); }
   }
+
+  /* ═══ MOBILE CONTROLS — safe area aware ═══ */
   #mobileControls {
     display: none; position: fixed;
-    bottom: calc(env(safe-area-inset-bottom) + 12px);
-    left: 0; right: 0; padding: 0 12px; z-index: 100;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    left: env(safe-area-inset-left, 0px);
+    right: env(safe-area-inset-right, 0px);
+    padding: 0 12px; z-index: 100;
     pointer-events: none; justify-content: space-between; align-items: flex-end; gap: 12px;
   }
   .ctrlGroup { display: flex; gap: 10px; pointer-events: auto; }
@@ -52,7 +56,7 @@
     transform: scale(0.9); box-shadow: 0 0 30px rgba(0, 240, 255, 0.9);
     background: linear-gradient(135deg, rgba(0, 240, 255, 0.5), rgba(255, 68, 34, 0.4));
   }
-  .fireBtns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .fireBtns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; pointer-events: auto; }
   .fireBtn {
     width: 52px; height: 52px; border-radius: 12px;
     background: linear-gradient(135deg, rgba(255, 68, 34, 0.25), rgba(176, 64, 255, 0.25));
@@ -71,12 +75,113 @@
   @media (max-width: 1024px) and (hover: none) and (pointer: coarse) {
     #mobileControls { display: flex; }
   }
+
+  /* ═══ ROTATE OVERLAY (portrait mode) ═══ */
+  #rotateOverlay {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 99999;
+    background: radial-gradient(circle at 50% 40%, #1a0a35 0%, #06010f 55%, #020005 100%);
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    text-align: center; padding: 32px; overflow: hidden;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  #rotateOverlay::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(circle at 20% 80%, rgba(0,240,255,0.18), transparent 55%),
+      radial-gradient(circle at 80% 20%, rgba(255,0,160,0.18), transparent 55%);
+    animation: overlayPulse 4s ease-in-out infinite alternate;
+  }
+  @keyframes overlayPulse {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+  }
+  .rotateInner {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 14px;
+    max-width: 360px;
+  }
+  .phoneIcon {
+    font-size: 100px; line-height: 1; display: inline-block;
+    animation: phoneRotate 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    filter: drop-shadow(0 0 30px rgba(0,240,255,0.85)) drop-shadow(0 0 60px rgba(176,64,255,0.5));
+    will-change: transform;
+  }
+  @keyframes phoneRotate {
+    0%, 15%   { transform: rotate(0deg); }
+    50%, 65%  { transform: rotate(-90deg); }
+    100%      { transform: rotate(0deg); }
+  }
+  #rotateOverlay .title {
+    font-size: 22px; font-weight: 800;
+    letter-spacing: 4px;
+    color: #00f0ff;
+    text-shadow: 0 0 20px rgba(0,240,255,0.9), 0 0 40px rgba(0,240,255,0.4);
+    margin-top: 6px;
+  }
+  #rotateOverlay .subtitle {
+    font-size: 14px; color: rgba(255,255,255,0.78);
+    line-height: 1.65; max-width: 320px;
+  }
+  #rotateOverlay .subtitle b {
+    color: #ff44aa;
+    text-shadow: 0 0 12px rgba(255,68,170,0.85);
+    letter-spacing: 1px;
+  }
+  #rotateOverlay .hintRow {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px;
+    padding: 10px 18px;
+    border-radius: 12px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    font-size: 12px;
+    color: rgba(0, 240, 255, 0.9);
+    letter-spacing: 0.5px;
+  }
+  #rotateOverlay .hintRow .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #00ffb0;
+    box-shadow: 0 0 12px #00ffb0;
+    animation: hintDot 1.4s ease-in-out infinite;
+  }
+  @keyframes hintDot {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Toggle states via body class */
+  body.portrait-locked #rotateOverlay { display: flex; }
+  body.portrait-locked #gameWrap,
+  body.portrait-locked #mobileControls { display: none !important; }
 </style>
 </head>
 <body>
+
+<!-- ═══ ROTATE OVERLAY ═══ -->
+<div id="rotateOverlay" aria-hidden="true">
+  <div class="rotateInner">
+    <div class="phoneIcon">📱</div>
+    <div class="title">PUTAR PERANGKAT</div>
+    <div class="subtitle">Game ini dirancang untuk dimainkan dalam mode <b>LANDSCAPE</b>. Silakan putar HP Anda untuk memulai misi.</div>
+    <div class="hintRow">
+      <span class="dot"></span>
+      <span>Menunggu orientasi landscape…</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ GAME ═══ -->
 <div id="gameWrap">
   <canvas id="game" width="1200" height="720"></canvas>
 </div>
+
+<!-- ═══ MOBILE CONTROLS ═══ -->
 <div id="mobileControls">
   <div class="ctrlGroup">
     <div class="ctrlBtn" id="btnLeft">◀</div>
@@ -89,6 +194,7 @@
     <div class="fireBtn" data-opt="3">4</div>
   </div>
 </div>
+
 <script>
 'use strict';
 
@@ -111,18 +217,41 @@ const C = {
   bgMid:     '#0a0420',
 };
 
-/* ═══ RESPONSIVE ═══ */
+/* ═══ RESPONSIVE + ORIENTATION ═══ */
 let viewScale = 1;
+const isCoarsePointer = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+const isPortrait = () => window.innerHeight > window.innerWidth;
+
+function updateOrientationOverlay() {
+  // Hanya tampilkan overlay di HP/tablet (coarse pointer) saat portrait
+  const locked = isCoarsePointer() && isPortrait();
+  document.body.classList.toggle('portrait-locked', locked);
+  return locked;
+}
+
 function resize() {
-  const isMobile = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-  const padding = isMobile ? 0.98 : 0.98;
-  const s = Math.min(window.innerWidth / W, window.innerHeight / H) * padding;
+  const locked = updateOrientationOverlay();
+  if (locked) return; // canvas disembunyikan, tidak perlu resize
+
+  const isMobile = isCoarsePointer();
+  // Padding lebih longgar di HP supaya tidak mentok notch / edge
+  const padding = isMobile ? 0.94 : 0.98;
+
+  // Gunakan visualViewport jika tersedia (lebih akurat di HP modern)
+  const vw = (window.visualViewport && window.visualViewport.width)  || window.innerWidth;
+  const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
+
+  const s = Math.min(vw / W, vh / H) * padding;
   viewScale = s;
   cvs.style.width  = (W * s) + 'px';
   cvs.style.height = (H * s) + 'px';
 }
+
 window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(resize, 120));
+window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', resize);
+}
 resize();
 
 /* ═══ AUDIO ═══ */
@@ -561,7 +690,6 @@ function newRound() {
     launching: false, launchVy: 0, launchSpin: 0,
     fleeing: false, fleeVx: 0, fleeVy: 0, fleeRot: 0, fleeSpin: 0,
     panelScale: 0, panelFlash: 0,
-    /* Realistic dynamics */
     bank: 0, bankTarget: 0,
     pitch: 0, pitchTarget: 0,
     wingFlex: 0,
@@ -624,23 +752,20 @@ function destroyEnemyPlane(e) {
     '#e8e8e8', '#9098a4', accent, '#ff4422',
   ];
 
-  /* — Ledakan inti multi-layer (fireball) — */
-  explosion(e.x, e.y, '#ffdd77', 32, 260, 1.9);   /* kuning terang */
-  explosion(e.x, e.y, C.amber, 42, 460, 1.7);     /* jingga */
-  explosion(e.x, e.y, C.pink, 38, 540, 1.5);      /* merah */
-  explosion(e.x, e.y, '#ff5030', 30, 420, 1.6);   /* merah tua */
-  explosion(e.x, e.y, C.white, 30, 700, 1.1);     /* kilatan putih */
-  explosion(e.x, e.y, accent, 24, 520, 1.4);      /* warna aksen */
-  explosion(e.x, e.y, '#401510', 22, 380, 2.2);   /* asap gelap */
+  explosion(e.x, e.y, '#ffdd77', 32, 260, 1.9);
+  explosion(e.x, e.y, C.amber, 42, 460, 1.7);
+  explosion(e.x, e.y, C.pink, 38, 540, 1.5);
+  explosion(e.x, e.y, '#ff5030', 30, 420, 1.6);
+  explosion(e.x, e.y, C.white, 30, 700, 1.1);
+  explosion(e.x, e.y, accent, 24, 520, 1.4);
+  explosion(e.x, e.y, '#401510', 22, 380, 2.2);
 
-  /* — Shockwave berlapis (gelombang kejut beruntun) — */
   shockwave(e.x, e.y, C.white, 340, 0.75);
   shockwave(e.x, e.y, C.amber, 240, 0.6);
   shockwave(e.x, e.y, accent, 480, 1.0);
   shockwave(e.x, e.y, C.pink, 620, 1.3);
   shockwave(e.x, e.y, C.white, 780, 1.6);
 
-  /* — Pecahan logam pesawat (40+ fragmen berputar) — */
   for (let i = 0; i < 46; i++) {
     const ang = Math.random() * Math.PI * 2;
     const sp = 130 + Math.random() * 620;
@@ -666,7 +791,6 @@ function destroyEnemyPlane(e) {
     });
   }
 
-  /* — Trail api & asap dari titik ledakan — */
   for (let i = 0; i < 34; i++) {
     spawnEngineTrail(
       e.x + (Math.random() - 0.5) * 80,
@@ -674,7 +798,6 @@ function destroyEnemyPlane(e) {
       Math.random() < 0.33 ? C.amber : (Math.random() < 0.5 ? C.pink : '#ff8030')
     );
   }
-  /* — Gumpalan asap hitam (bertahan lama) — */
   for (let i = 0; i < 20; i++) {
     spawnSmokePuff(
       e.x + (Math.random() - 0.5) * 60,
@@ -683,21 +806,17 @@ function destroyEnemyPlane(e) {
     );
   }
 
-  /* — Debris logam tambahan — */
   debrisBurst(e.x, e.y, C.cyanDark, 16);
   debrisBurst(e.x, e.y, C.amber, 12);
   debrisBurst(e.x, e.y, C.pink, 10);
   debrisBurst(e.x, e.y, '#606870', 12);
 
-  /* — Distorsi panas — */
   for (let i = 0; i < 3; i++) spawnHeatDistortion(e.x, e.y, 60 + i * 40);
 
-  /* — Guncangan & efek layar — */
   state.shake = Math.max(state.shake, 12);
   state.flashGreen = Math.max(state.flashGreen, 0.6);
   state.flashRed   = Math.max(state.flashRed, 0.35);
 
-  /* — Suara ledakan hancur (multi-layer) — */
   noiseBurst(1.2, 0.26, 700);
   noiseBurst(0.6, 0.20, 1800);
   noiseBurst(0.3, 0.15, 3200);
@@ -721,7 +840,6 @@ function fire(idx) {
   for (let i = 0; i < 8; i++) {
     particles.push({ x: player.x, y: player.y - 30, vx: (Math.random()-0.5)*120, vy: -Math.random()*180, life: 0.15, max: 0.15, size: 3+Math.random()*3, color: C.cyan, glow: true });
   }
-  /* Muzzle flash */
   spawnHeatDistortion(player.x, player.y - 40, 30);
   tone(1200, 0.06, 'sawtooth', 0.035, 400);
   tone(2200, 0.04, 'square', 0.022, 800);
@@ -754,7 +872,6 @@ function resolveHit(bullet, enemy) {
     explosion(qShip.x, qShip.y, C.lime, 40, 360, 1.3);
     shockwave(qShip.x, qShip.y, C.lime, 260, 0.8);
 
-    /* 3 pesawat lainnya KABUR (belok + maju terbang) */
     enemies.forEach(o => {
       if (o !== enemy && o.alive && o.dying <= 0 && !o.launching && !o.fleeing) {
         o.fleeing = true;
@@ -771,7 +888,6 @@ function resolveHit(bullet, enemy) {
       }
     });
 
-    /* Pesawat yang ditembak benar — HANCUR LEBUR */
     enemy.panelFlash = 0.6;
     destroyEnemyPlane(enemy);
     enemy.alive = false;
@@ -938,7 +1054,6 @@ function update(dt) {
     if (o.y - o.size * 2 > H) spaceObjects[i] = makeSpaceObject(true);
   }
 
-  /* — Player ship dynamics (smooth banking) — */
   const dx = player.targetX - player.x;
   player.vx = lerp(player.vx, dx * 10, Math.min(1, dt * 12));
   player.x = lerp(player.x, player.targetX, Math.min(1, dt * 12));
@@ -990,7 +1105,6 @@ function update(dt) {
     if (d.life <= 0) qShipDebris.splice(i, 1);
   }
 
-  /* — Plane fragments (realistic tumbling metal) — */
   for (let i = planeFragments.length - 1; i >= 0; i--) {
     const f = planeFragments[i];
     f.x += f.vx * dt;
@@ -1003,7 +1117,6 @@ function update(dt) {
     if (f.life <= 0 || f.y > H + 90) planeFragments.splice(i, 1);
   }
 
-  /* — Smoke puffs (rising, expanding, fading) — */
   for (let i = smokePuffs.length - 1; i >= 0; i--) {
     const s = smokePuffs[i];
     s.x += s.vx * dt;
@@ -1039,7 +1152,6 @@ function update(dt) {
     state.shield = Math.min(state.maxShield, state.shield + dt * 8);
   }
 
-  /* Timer: pesawat musuh terbang maju mendekati pemain */
   if (state.roundActive && !state.locked && qShip.state === 'hovering') {
     state.timeLeft -= dt;
     qShip.chargeLevel = 1 - state.timeLeft / state.timeMax;
@@ -1054,18 +1166,15 @@ function update(dt) {
     if (state.timeLeft <= 0) { state.timeLeft = 0; timeUp(); }
   }
 
-  /* — Enemy F-16 realistic dynamics — */
   for (const e of enemies) {
     e.engine += dt * 8;
     if (e.panelFlash > 0) e.panelFlash -= dt;
 
-    /* Bank recovery when static */
     if (!e.fleeing && !e.launching && e.dying <= 0 && e.alive) {
       e.bankTarget = 0;
     }
     e.bank = lerp(e.bank, e.bankTarget, Math.min(1, dt * 4));
 
-    /* Fleeing state */
     if (e.fleeing) {
       e.fleeVy -= 400 * dt;
       e.fleeVx *= 1.012;
@@ -1722,7 +1831,6 @@ function drawEnemyShip(e) {
   const accentColors = [C.cyan, C.magenta, C.lime, C.amber];
   const accent = accentColors[e.type] || C.cyan;
 
-  /* Realistic F-16 low-visibility paint schemes */
   const schemes = [
     { hi:'#d4dce4', mid:'#8895a3', lo:'#485566', dark:'#1c2634' },
     { hi:'#e0d4dc', mid:'#a38895', lo:'#664855', dark:'#341c26' },
@@ -1749,7 +1857,6 @@ function drawEnemyShip(e) {
   const isFleeing = e.fleeing;
   const boost = isLaunch ? 2.2 : (isFleeing ? 1.8 : 1.0);
 
-  /* ═══ AFTERBURNER dengan shock diamonds ═══ */
   const flameLen = (36 + Math.sin(e.engine * 1.4) * 8) * flick * boost;
   const fg = ctx.createLinearGradient(0, -60, 0, -60 - flameLen);
   if (isHit) {
@@ -1775,7 +1882,6 @@ function drawEnemyShip(e) {
   ctx.moveTo(-8, -58); ctx.lineTo(0, -58 - flameLen); ctx.lineTo(8, -58);
   ctx.closePath(); ctx.fill();
 
-  /* Shock diamond pattern */
   for (let i = 0; i < 5; i++) {
     const t = (i + 0.5) / 5;
     const y = -58 - flameLen * t;
@@ -1786,7 +1892,6 @@ function drawEnemyShip(e) {
     ctx.fill();
   }
 
-  /* Afterburner core */
   const coreLen = flameLen * 0.5;
   const cgCore = ctx.createLinearGradient(0, -58, 0, -58 - coreLen);
   cgCore.addColorStop(0, 'rgba(255,255,255,1)');
@@ -1797,7 +1902,6 @@ function drawEnemyShip(e) {
   ctx.moveTo(-3, -58); ctx.lineTo(0, -58 - coreLen); ctx.lineTo(3, -58);
   ctx.closePath(); ctx.fill();
 
-  /* ═══ NOZZLE variable geometry (petals) ═══ */
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
     const nx = Math.cos(a) * 8;
@@ -1826,7 +1930,6 @@ function drawEnemyShip(e) {
   ctx.fill();
   ctx.shadowBlur = 0;
 
-  /* ═══ HORIZONTAL STABILATORS (all-moving delta) ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 8, -28);
@@ -1851,7 +1954,6 @@ function drawEnemyShip(e) {
     ctx.stroke();
   }
 
-  /* ═══ VERTICAL TAIL FIN ═══ */
   ctx.beginPath();
   ctx.moveTo(-2.5, -26);
   ctx.lineTo(-2, -44);
@@ -1882,7 +1984,6 @@ function drawEnemyShip(e) {
   ctx.strokeStyle = panelLine; ctx.lineWidth = 0.4;
   ctx.beginPath(); ctx.moveTo(0.5, -60); ctx.lineTo(1.8, -30); ctx.stroke();
 
-  /* ═══ VENTRAL FINS ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 3, -22);
@@ -1895,7 +1996,6 @@ function drawEnemyShip(e) {
     ctx.lineWidth = 0.6; ctx.stroke();
   }
 
-  /* ═══ MAIN WINGS — CRANKED-ARROW (autentik F-16) ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 7, 18);
@@ -1929,7 +2029,6 @@ function drawEnemyShip(e) {
     ctx.strokeStyle = isHit ? 'rgba(255,150,130,0.95)' : 'rgba(20,28,40,0.9)';
     ctx.lineWidth = 1; ctx.stroke();
 
-    /* Wing panel lines & rivets */
     ctx.strokeStyle = panelLine; ctx.lineWidth = 0.4;
     ctx.beginPath();
     ctx.moveTo(side * 20, -2); ctx.lineTo(side * 78, -20);
@@ -1937,11 +2036,9 @@ function drawEnemyShip(e) {
     ctx.moveTo(side * 32, -2); ctx.lineTo(side * 74, -24);
     ctx.stroke();
 
-    /* Fuel cap */
     ctx.fillStyle = isHit ? 'rgba(255,190,150,0.8)' : 'rgba(90,105,125,0.85)';
     ctx.beginPath(); ctx.arc(side * 40, -8, 1.2, 0, Math.PI * 2); ctx.fill();
 
-    /* Leading edge highlight */
     ctx.strokeStyle = isHit ? 'rgba(255,210,190,0.85)' : 'rgba(210,225,240,0.75)';
     ctx.lineWidth = 0.7;
     ctx.beginPath();
@@ -1951,7 +2048,6 @@ function drawEnemyShip(e) {
     ctx.lineTo(side * 80, -28);
     ctx.stroke();
 
-    /* Star & bar insignia */
     if (!isHit) {
       const ix = side * 56, iy = -14;
       ctx.beginPath(); ctx.arc(ix, iy, 3.4, 0, Math.PI * 2);
@@ -1974,7 +2070,6 @@ function drawEnemyShip(e) {
     }
   }
 
-  /* ═══ LERX ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 6, 34);
@@ -1993,7 +2088,6 @@ function drawEnemyShip(e) {
     ctx.lineWidth = 0.6; ctx.stroke();
   }
 
-  /* ═══ WINGTIP AIM-9 SIDEWINDER ═══ */
   for (const side of [-1, 1]) {
     ctx.fillStyle = hullDeep;
     ctx.fillRect(side * 81 - 1.5, -22, 3, 6);
@@ -2037,7 +2131,6 @@ function drawEnemyShip(e) {
     }
   }
 
-  /* ═══ UNDERWING PYLON + AMRAAM ═══ */
   for (const side of [-1, 1]) {
     const px = side * 40;
     ctx.fillStyle = hullDeep;
@@ -2077,7 +2170,6 @@ function drawEnemyShip(e) {
     }
   }
 
-  /* ═══ FUSELAGE ═══ */
   ctx.beginPath();
   ctx.moveTo(0, 72);
   ctx.bezierCurveTo(-2.5, 68, -4.5, 60, -5.5, 52);
@@ -2113,14 +2205,12 @@ function drawEnemyShip(e) {
   ctx.strokeStyle = isHit ? 'rgba(255,170,150,0.95)' : 'rgba(25,35,50,0.9)';
   ctx.lineWidth = 0.9; ctx.stroke();
 
-  /* Dorsal spine highlight */
   ctx.strokeStyle = isHit ? 'rgba(255,225,210,0.65)' : 'rgba(245,250,255,0.6)';
   ctx.lineWidth = 0.8;
   ctx.beginPath();
   ctx.moveTo(0, 68); ctx.lineTo(0, -55);
   ctx.stroke();
 
-  /* Panel lines & rivets */
   ctx.strokeStyle = panelLine; ctx.lineWidth = 0.4;
   const panelYs = [58, 46, 34, 22, 10, -2, -14, -26, -38, -50];
   for (const py of panelYs) {
@@ -2134,7 +2224,6 @@ function drawEnemyShip(e) {
   ctx.moveTo(6, 60);  ctx.lineTo(8, -50);
   ctx.stroke();
 
-  /* Access panels */
   if (!isHit) {
     ctx.fillStyle = 'rgba(60,75,95,0.35)';
     ctx.fillRect(-5, 14, 10, 5);
@@ -2147,7 +2236,6 @@ function drawEnemyShip(e) {
     ctx.strokeRect(-3, -36, 6, 3);
   }
 
-  /* ═══ BUBBLE CANOPY ═══ */
   ctx.beginPath();
   ctx.moveTo(-7, 46);
   ctx.quadraticCurveTo(-8.5, 40, -7.5, 32);
@@ -2212,7 +2300,6 @@ function drawEnemyShip(e) {
   ctx.moveTo(-1.5, 43); ctx.quadraticCurveTo(-0.5, 34, 1.5, 21);
   ctx.stroke();
 
-  /* ═══ CHIN INTAKE ═══ */
   ctx.beginPath();
   ctx.ellipse(0, 54, 8, 5.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#08080f'; ctx.fill();
@@ -2230,7 +2317,6 @@ function drawEnemyShip(e) {
   ctx.strokeStyle = 'rgba(55,65,85,0.7)';
   ctx.lineWidth = 0.5; ctx.stroke();
 
-  /* ═══ NOSE CONE (radome) ═══ */
   ctx.beginPath();
   ctx.moveTo(0, 72);
   ctx.bezierCurveTo(-2.5, 68, -4.5, 60, -5.5, 52);
@@ -2258,14 +2344,12 @@ function drawEnemyShip(e) {
   ctx.moveTo(-5.5, 52); ctx.lineTo(5.5, 52);
   ctx.stroke();
 
-  /* Pitot tube */
   ctx.strokeStyle = isHit ? 'rgba(255,190,170,0.9)' : 'rgba(110,120,140,0.95)';
   ctx.lineWidth = 1.2;
   ctx.beginPath(); ctx.moveTo(0, 72); ctx.lineTo(0, 82); ctx.stroke();
   ctx.lineWidth = 0.7;
   ctx.beginPath(); ctx.moveTo(-1.5, 78); ctx.lineTo(1.5, 78); ctx.stroke();
 
-  /* ═══ NAV LIGHTS ═══ */
   const navBlink = 0.6 + Math.sin(e.engine * 1.5) * 0.4;
   ctx.globalAlpha = sc * navBlink;
   ctx.beginPath(); ctx.arc(-84, -24, 1.8, 0, Math.PI * 2);
@@ -2280,7 +2364,6 @@ function drawEnemyShip(e) {
   ctx.shadowBlur = 0;
   ctx.globalAlpha = sc;
 
-  /* ═══ NUMBER BADGE ═══ */
   const idx = enemies.indexOf(e);
   ctx.beginPath();
   ctx.arc(-11, -42, 8.5, 0, Math.PI * 2);
@@ -2295,7 +2378,6 @@ function drawEnemyShip(e) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(String(idx + 1), -11, -41);
 
-  /* ═══ BOSS HP BAR ═══ */
   if (state.bossMode && e.hp > 1 && e.alive) {
     const hpW = 44;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -2804,7 +2886,6 @@ function drawPlaneFragments() {
     if (f.glow) { ctx.shadowColor = f.color; ctx.shadowBlur = 14; }
 
     if (f.isPanel) {
-      /* Panel/plate fragment (rectangular) */
       ctx.fillStyle = f.color;
       ctx.fillRect(-f.panelW / 2, -f.panelH / 2, f.panelW, f.panelH);
       ctx.strokeStyle = hex2rgba(C.white, 0.6 * a);
@@ -3277,6 +3358,13 @@ function loop(ts) {
   lastTs = ts;
   if (dt > 0.05) dt = 0.05;
   if (dt < 0) dt = 0;
+
+  // Jika sedang portrait-locked (overlay rotate aktif), skip update/render agar hemat baterai
+  if (document.body.classList.contains('portrait-locked')) {
+    requestAnimationFrame(loop);
+    return;
+  }
+
   update(dt);
   render();
   requestAnimationFrame(loop);
