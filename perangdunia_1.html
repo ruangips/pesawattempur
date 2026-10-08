@@ -43,10 +43,10 @@
   }
   .ctrlGroup { display: flex; gap: 10px; pointer-events: auto; }
   .ctrlBtn {
-    width: 56px; height: 56px; border-radius: 50%;
+    width: 58px; height: 58px; border-radius: 50%;
     background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(255, 68, 34, 0.2));
     border: 2px solid rgba(0, 240, 255, 0.6);
-    color: #00f0ff; font-size: 22px; font-weight: bold;
+    color: #00f0ff; font-size: 23px; font-weight: bold;
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
@@ -58,10 +58,10 @@
   }
   .fireBtns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; pointer-events: auto; }
   .fireBtn {
-    width: 52px; height: 52px; border-radius: 12px;
+    width: 54px; height: 54px; border-radius: 12px;
     background: linear-gradient(135deg, rgba(255, 68, 34, 0.25), rgba(176, 64, 255, 0.25));
     border: 2px solid rgba(255, 68, 34, 0.7);
-    color: #ff4422; font-size: 18px; font-weight: bold;
+    color: #ff4422; font-size: 20px; font-weight: bold;
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 0 20px rgba(255, 68, 34, 0.4);
@@ -217,34 +217,97 @@ const C = {
   bgMid:     '#0a0420',
 };
 
-/* ═══ RESPONSIVE + ORIENTATION ═══ */
-let viewScale = 1;
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE / SKALA — semua ukuran teks kini adaptif
+   ═══════════════════════════════════════════════════════════════ */
+let viewScale = 1;    // skala kanvas (CSS px per px logis)
+let uiScale   = 1;    // pengali ukuran teks supaya selalu terbaca
+let baseScale = 1;    // skala transform kanvas (viewScale * dpr)
+let dpr       = 1;
+
+/* Variabel layout (berubah mengikuti ukuran layar) */
+let COL_X = [150, 450, 750, 1050];
+let SHIP_Y_START = 250;
+let SHIP_Y_END = 448;
+let SHIP_TOTAL_DESCENT = 198;
+let PANEL_BELOW_GAP = 102;
+let PANEL_W = 286;
+let PANEL_H = 82;
+let QP_X = 130, QP_Y = 76, QP_W = 940, QP_H = 126;
+const ENEMY_SCALE = 0.72;
+
 const isCoarsePointer = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 const isPortrait = () => window.innerHeight > window.innerWidth;
 
 function updateOrientationOverlay() {
-  // Hanya tampilkan overlay di HP/tablet (coarse pointer) saat portrait
   const locked = isCoarsePointer() && isPortrait();
   document.body.classList.toggle('portrait-locked', locked);
   return locked;
 }
 
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function hex2rgba(hex, a) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16);
+  const g = parseInt(h.substring(2,4),16);
+  const b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* Ukuran font adaptif — inti dari perbaikan keterbacaan */
+function fs(n, cap) { return Math.round(n * Math.min(uiScale, cap || 1.7)); }
+
+function applyLayout() {
+  const u = uiScale;
+
+  // Panel pertanyaan
+  QP_X = 120 - 8 * (u - 1);
+  QP_W = W - QP_X * 2;
+  QP_Y = 62 + 15 * u;
+  QP_H = 124 + 42 * (u - 1);
+
+  // Posisi pesawat & panel jawaban
+  SHIP_Y_START = QP_Y + QP_H + 62;
+  PANEL_H = 54 + 27 * u;
+  PANEL_BELOW_GAP = 52 + PANEL_H / 2 + 10;
+  SHIP_Y_END = 592 - PANEL_BELOW_GAP - PANEL_H / 2;
+  if (SHIP_Y_END > 470) SHIP_Y_END = 470;
+  if (SHIP_Y_END < SHIP_Y_START + 90) SHIP_Y_END = SHIP_Y_START + 90;
+  SHIP_TOTAL_DESCENT = SHIP_Y_END - SHIP_Y_START;
+
+  COL_X = [150, 450, 750, 1050];
+  PANEL_W = 286;
+}
+
 function resize() {
   const locked = updateOrientationOverlay();
-  if (locked) return; // canvas disembunyikan, tidak perlu resize
+  if (locked) return;
 
   const isMobile = isCoarsePointer();
-  // Padding lebih longgar di HP supaya tidak mentok notch / edge
-  const padding = isMobile ? 0.94 : 0.98;
+  const padding = isMobile ? 0.965 : 0.98;
 
-  // Gunakan visualViewport jika tersedia (lebih akurat di HP modern)
   const vw = (window.visualViewport && window.visualViewport.width)  || window.innerWidth;
   const vh = (window.visualViewport && window.visualViewport.height) || window.innerHeight;
 
   const s = Math.min(vw / W, vh / H) * padding;
   viewScale = s;
+
+  // Perbesar teks bila kanvas tampil kecil di layar
+  uiScale = clamp(0.88 / s, 1, 1.7);
+
+  // Resolusi internal mengikuti pixel density layar → teks tajam
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const maxW = 3400;
+  if (W * s * dpr > maxW) dpr = Math.max(1, maxW / (W * s));
+
   cvs.style.width  = (W * s) + 'px';
   cvs.style.height = (H * s) + 'px';
+  cvs.width  = Math.max(2, Math.round(W * s * dpr));
+  cvs.height = Math.max(2, Math.round(H * s * dpr));
+  baseScale = cvs.width / W;
+
+  applyLayout();
 }
 
 window.addEventListener('resize', resize);
@@ -350,6 +413,7 @@ function shuffle(a) {
 }
 function roundRect(c, x, y, w, h, r) {
   r = Math.min(r, w / 2, h / 2);
+  if (r < 0) r = 0;
   c.beginPath();
   c.moveTo(x + r, y);
   c.arcTo(x + w, y, x + w, y + h, r);
@@ -370,26 +434,8 @@ function wrapText(text, maxWidth, font) {
   ctx.font = prev;
   return lines;
 }
-function lerp(a, b, t) { return a + (b - a) * t; }
-function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-function hex2rgba(hex, a) {
-  const h = hex.replace('#','');
-  const r = parseInt(h.substring(0,2),16);
-  const g = parseInt(h.substring(2,4),16);
-  const b = parseInt(h.substring(4,6),16);
-  return `rgba(${r},${g},${b},${a})`;
-}
 
-/* ═══ LAYOUT ═══ */
-const COL_X = [130, 445, 755, 1070];
-const SHIP_Y_START = 200;
-const SHIP_Y_END = 500;
-const SHIP_TOTAL_DESCENT = SHIP_Y_END - SHIP_Y_START;
-const PANEL_BELOW_GAP = 82;
-const PANEL_W = 240;
-const PANEL_H = 56;
-const ENEMY_SCALE = 0.72;
-
+/* ═══ STATE ═══ */
 const state = {
   mode: 'menu',
   score: 0, hp: 5, maxHp: 5,
@@ -742,7 +788,7 @@ function spawnHeatDistortion(x, y, r) {
   heatDistortions.push({ x, y, r, life: 0.4, max: 0.4 });
 }
 
-/* ═══ DESTRUCTION — pesawat musuh HANCUR LEBUR ═══ */
+/* ═══ DESTRUCTION ═══ */
 function destroyEnemyPlane(e) {
   const accentColors = [C.cyan, C.magenta, C.lime, C.amber];
   const accent = accentColors[e.type] || C.cyan;
@@ -1380,7 +1426,7 @@ function drawSmokePuffs() {
     g.addColorStop(1, 'rgba(20,20,25,0)');
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(0, 0, s.size, 0, Math.PI*2); ctx.fill();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(baseScale, 0, 0, baseScale, 0, 0);
   }
   ctx.restore();
 }
@@ -1692,15 +1738,20 @@ function drawQShipDebris() {
   }
 }
 
-/* ═══ PANEL PERTANYAAN ═══ */
+/* ═══ PANEL PERTANYAAN — ukuran teks adaptif ═══ */
 function drawQuestionPanel() {
   if (!currentQuestion) return;
   const slideIn = state.qPanelSlide;
   const slideEase = 1 - Math.pow(1 - slideIn, 3);
-  const panelX = 140;
-  const panelY = 72 + (1 - slideEase) * -120;
-  const panelW = W - 280;
-  const panelH = 118;
+  const panelX = QP_X;
+  const panelY = QP_Y + (1 - slideEase) * -140;
+  const panelW = QP_W;
+  const panelH = QP_H;
+
+  const fHead = fs(11, 1.45);
+  const fQ    = fs(24, 1.36);
+  const fTime = fs(15, 1.45);
+  const lh    = Math.round(fQ * 1.26);
 
   ctx.save();
   ctx.save();
@@ -1757,64 +1808,65 @@ function drawQuestionPanel() {
   ctx.fillRect(panelX + 4, scanY - 20, panelW - 8, 40);
   ctx.restore();
 
-  ctx.font = 'bold 11px "Consolas", monospace';
+  ctx.font = `bold ${fHead}px "Consolas", monospace`;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillStyle = C.magenta;
   ctx.shadowColor = C.magenta; ctx.shadowBlur = 10;
-  ctx.fillText('◈ PERTANYAAN PERANG DUNIA I (1914–1918)', panelX + 30, panelY + 14);
+  ctx.fillText('◈ PERTANYAAN PERANG DUNIA I (1914–1918)', panelX + 26, panelY + 12);
   ctx.shadowBlur = 0;
 
   const pulse = 0.5 + Math.sin(state.gameTime * 5) * 0.5;
   ctx.globalAlpha = pulse;
-  ctx.beginPath(); ctx.arc(panelX + panelW - 30, panelY + 20, 5, 0, Math.PI*2);
+  ctx.beginPath(); ctx.arc(panelX + panelW - 30, panelY + 18, 5, 0, Math.PI*2);
   ctx.fillStyle = C.lime;
   ctx.shadowColor = C.lime; ctx.shadowBlur = 14; ctx.fill();
   ctx.shadowBlur = 0; ctx.globalAlpha = 1;
 
-  ctx.font = 'bold 10px "Consolas", monospace';
+  ctx.font = `bold ${fs(10, 1.45)}px "Consolas", monospace`;
   ctx.textAlign = 'right';
   ctx.fillStyle = C.lime;
-  ctx.fillText('AKTIF', panelX + panelW - 42, panelY + 16);
+  ctx.fillText('AKTIF', panelX + panelW - 42, panelY + 14);
 
-  const font = 'bold 24px system-ui, sans-serif';
-  const lines = wrapText(currentQuestion.q, panelW - 80, font);
+  const font = `bold ${fQ}px system-ui, sans-serif`;
+  const lines = wrapText(currentQuestion.q, panelW - 70, font);
   ctx.font = font;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = C.white;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 12;
-  const lh = 30;
-  const textCY = panelY + panelH/2 + 8;
+  const regionTop = panelY + 12 + fHead + 10;
+  const regionBot = panelY + panelH - 20;
+  const textCY = (regionTop + regionBot) / 2;
   const startY = textCY - ((lines.length - 1) * lh) / 2;
   lines.forEach((ln, i) => ctx.fillText(ln, W/2, startY + i * lh));
   ctx.shadowBlur = 0;
 
   const tBarX = panelX + 30;
-  const tBarY = panelY + panelH - 16;
+  const tBarY = panelY + panelH - 14;
   const tBarW = panelW - 60;
-  const tBarH = 6;
+  const tBarH = 7;
 
-  roundRect(ctx, tBarX, tBarY, tBarW, tBarH, 3);
+  roundRect(ctx, tBarX, tBarY, tBarW, tBarH, 3.5);
   ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'; ctx.fill();
 
   const tRatio = clamp(state.timeLeft / state.timeMax, 0, 1);
   const barColor = tRatio > 0.5 ? C.lime : tRatio > 0.25 ? C.amber : C.pink;
   if (tRatio > 0) {
-    roundRect(ctx, tBarX, tBarY, tBarW * tRatio, tBarH, 3);
+    roundRect(ctx, tBarX, tBarY, tBarW * tRatio, tBarH, 3.5);
     ctx.fillStyle = barColor;
     ctx.shadowColor = barColor; ctx.shadowBlur = 18; ctx.fill();
     ctx.shadowBlur = 0;
     const edgeX = tBarX + tBarW * tRatio;
-    ctx.beginPath(); ctx.arc(edgeX, tBarY + tBarH/2, 5, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(edgeX, tBarY + tBarH/2, 5.5, 0, Math.PI*2);
     ctx.fillStyle = C.white;
     ctx.shadowColor = barColor; ctx.shadowBlur = 20; ctx.fill();
     ctx.shadowBlur = 0;
   }
 
-  ctx.font = 'bold 16px "Consolas", monospace';
+  ctx.font = `bold ${fTime}px "Consolas", monospace`;
   ctx.textAlign = 'right'; ctx.textBaseline = 'top';
   ctx.fillStyle = barColor;
   ctx.shadowColor = barColor; ctx.shadowBlur = 10;
-  ctx.fillText(state.timeLeft.toFixed(1) + 's', panelX + panelW - 30, panelY + 40);
+  ctx.fillText(state.timeLeft.toFixed(1) + 's', panelX + panelW - 30, panelY + 36);
   ctx.shadowBlur = 0;
   ctx.restore();
 }
@@ -1844,10 +1896,11 @@ function drawEnemyShip(e) {
   const hullDeep  = isHit ? '#2a0508' : s.dark;
   const panelLine = isHit ? 'rgba(255,90,80,0.55)' : 'rgba(45,60,80,0.6)';
 
+  const totalScale = sc * ENEMY_SCALE;
+
   ctx.save();
   ctx.translate(e.x, e.y);
   ctx.rotate(e.rot + e.bank * 0.35);
-  const totalScale = sc * ENEMY_SCALE;
   ctx.scale(totalScale, totalScale);
   ctx.globalAlpha = sc;
 
@@ -2159,11 +2212,11 @@ function drawEnemyShip(e) {
     ctx.fillStyle = 'rgba(60,50,60,0.95)';
     ctx.fill();
 
-    for (const fs of [-1, 1]) {
+    for (const fs2 of [-1, 1]) {
       ctx.beginPath();
-      ctx.moveTo(px + fs * 1.8, 12);
-      ctx.lineTo(px + fs * 4, 15);
-      ctx.lineTo(px + fs * 1.8, 15);
+      ctx.moveTo(px + fs2 * 1.8, 12);
+      ctx.lineTo(px + fs2 * 4, 15);
+      ctx.lineTo(px + fs2 * 1.8, 15);
       ctx.closePath();
       ctx.fillStyle = 'rgba(60,70,90,0.9)';
       ctx.fill();
@@ -2364,20 +2417,6 @@ function drawEnemyShip(e) {
   ctx.shadowBlur = 0;
   ctx.globalAlpha = sc;
 
-  const idx = enemies.indexOf(e);
-  ctx.beginPath();
-  ctx.arc(-11, -42, 8.5, 0, Math.PI * 2);
-  const badgeG = ctx.createRadialGradient(-13, -44, 0, -11, -42, 9);
-  badgeG.addColorStop(0, 'rgba(30,45,70,0.95)');
-  badgeG.addColorStop(1, 'rgba(8,12,24,0.98)');
-  ctx.fillStyle = badgeG; ctx.fill();
-  ctx.strokeStyle = state.bossMode ? C.amber : accent;
-  ctx.lineWidth = 1.6; ctx.stroke();
-  ctx.fillStyle = C.white;
-  ctx.font = 'bold 10px system-ui, sans-serif';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(String(idx + 1), -11, -41);
-
   if (state.bossMode && e.hp > 1 && e.alive) {
     const hpW = 44;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
@@ -2392,6 +2431,28 @@ function drawEnemyShip(e) {
   }
 
   ctx.restore();
+
+  /* ── Nomor jawaban digambar di luar skala pesawat supaya tetap besar ── */
+  const idx = enemies.indexOf(e);
+  if (idx >= 0) {
+    const br = 13 * Math.min(uiScale, 1.6);
+    const bfx = e.x - 46 * totalScale;
+    const bfy = e.y - 24 * totalScale;
+    ctx.save();
+    ctx.globalAlpha = sc;
+    ctx.beginPath(); ctx.arc(bfx, bfy, br, 0, Math.PI*2);
+    const bg2 = ctx.createRadialGradient(bfx - br*0.35, bfy - br*0.35, 0, bfx, bfy, br);
+    bg2.addColorStop(0, 'rgba(34,52,80,0.96)');
+    bg2.addColorStop(1, 'rgba(8,12,24,0.98)');
+    ctx.fillStyle = bg2; ctx.fill();
+    ctx.strokeStyle = state.bossMode ? C.amber : accent;
+    ctx.lineWidth = 2.2; ctx.stroke();
+    ctx.fillStyle = C.white;
+    ctx.font = `bold ${Math.round(14 * Math.min(uiScale, 1.6))}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(idx + 1), bfx, bfy + 1);
+    ctx.restore();
+  }
 }
 
 function drawEnemyPanel(e) {
@@ -2419,13 +2480,13 @@ function drawEnemyPanel(e) {
   ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 6]);
   ctx.beginPath();
-  ctx.moveTo(cx, e.y + 55);
+  ctx.moveTo(cx, e.y + 55 * panelSc);
   ctx.lineTo(cx, y);
   ctx.stroke();
   ctx.setLineDash([]);
 
   ctx.beginPath();
-  ctx.arc(cx, e.y + 55, 3, 0, Math.PI*2);
+  ctx.arc(cx, e.y + 55 * panelSc, 3, 0, Math.PI*2);
   ctx.fillStyle = accent;
   ctx.shadowColor = accent; ctx.shadowBlur = 12; ctx.fill();
   ctx.shadowBlur = 0;
@@ -2462,21 +2523,23 @@ function drawEnemyPanel(e) {
   ctx.moveTo(x + w - cLen, y + h - 4); ctx.lineTo(x + w - 4, y + h - 4); ctx.lineTo(x + w - 4, y + h - cLen);
   ctx.stroke();
 
-  ctx.font = 'bold 10px "Consolas", monospace';
+  const fBadge = Math.round(10 * Math.min(uiScale, 1.5));
+  ctx.font = `bold ${fBadge}px "Consolas", monospace`;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillStyle = accent;
   ctx.shadowColor = accent; ctx.shadowBlur = 8;
   ctx.fillText(`[${enemies.indexOf(e) + 1}]`, x + 12, y + 6);
   ctx.shadowBlur = 0;
 
-  const font = `bold ${15 * panelSc}px system-ui, sans-serif`;
-  const lines = wrapText(e.text, w - 34, font);
+  const fOpt = Math.round(15 * uiScale * panelSc);
+  const font = `bold ${fOpt}px system-ui, sans-serif`;
+  const lines = wrapText(e.text, w - 30, font);
   ctx.font = font;
   ctx.fillStyle = C.white;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.shadowColor = accent; ctx.shadowBlur = 8;
-  const lh = 19 * panelSc;
-  const startY = cy - ((lines.length - 1) * lh) / 2 + 2;
+  const lh = Math.round(fOpt * 1.16);
+  const startY = cy - ((lines.length - 1) * lh) / 2 + 3;
   lines.forEach((ln, i) => ctx.fillText(ln, cx, startY + i * lh));
   ctx.shadowBlur = 0;
 
@@ -2755,7 +2818,7 @@ function drawPlayer() {
   }
 
   if (tier >= 2) {
-    ctx.font = 'bold 8px "Consolas", monospace';
+    ctx.font = `bold ${fs(9, 1.5)}px "Consolas", monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = C.lime;
     ctx.shadowColor = C.lime; ctx.shadowBlur = 8;
@@ -2919,7 +2982,7 @@ function drawPopups() {
     const a = Math.max(0, p.life / p.maxLife);
     ctx.save();
     ctx.globalAlpha = a;
-    ctx.font = `bold ${p.size}px system-ui, sans-serif`;
+    ctx.font = `bold ${fs(p.size, 1.5)}px system-ui, sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillStyle = p.color;
     ctx.shadowColor = p.color; ctx.shadowBlur = 18;
@@ -2928,99 +2991,83 @@ function drawPopups() {
   }
 }
 
+/* ═══ HUD — ikut membesar di layar kecil ═══ */
 function drawHUD() {
+  const u = uiScale;
   ctx.save();
-  const barGrad = ctx.createLinearGradient(0, 0, 0, 62);
+
+  const barH = 58 + 46 * u;
+  const barGrad = ctx.createLinearGradient(0, 0, 0, barH);
   barGrad.addColorStop(0, 'rgba(15, 5, 40, 0.88)');
   barGrad.addColorStop(1, 'rgba(15, 5, 40, 0)');
   ctx.fillStyle = barGrad;
-  ctx.fillRect(0, 0, W, 62);
+  ctx.fillRect(0, 0, W, barH);
 
-  const px = 24, py = 14;
-  roundRect(ctx, px, py, 220, 40, 10);
-  const sg1 = ctx.createLinearGradient(px, py, px, py + 40);
+  const by = 10;
+  const bh = 42 * u;
+  const bw = 208 * u;
+
+  /* — KIRI : SKOR — */
+  const px = 20;
+  roundRect(ctx, px, by, bw, bh, 10);
+  const sg1 = ctx.createLinearGradient(px, by, px, by + bh);
   sg1.addColorStop(0, 'rgba(30, 10, 60, 0.85)');
   sg1.addColorStop(1, 'rgba(10, 4, 30, 0.9)');
   ctx.fillStyle = sg1; ctx.fill();
   ctx.strokeStyle = hex2rgba(C.cyan, 0.7); ctx.lineWidth = 1.5; ctx.stroke();
 
-  ctx.font = 'bold 12px system-ui, sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = `bold ${fs(11, 1.6)}px system-ui, sans-serif`;
   ctx.fillStyle = C.cyan;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 8;
-  ctx.fillText('◈ SKOR', px + 14, py + 13);
+  ctx.fillText('◈ SKOR', px + 14, by + bh * 0.32);
   ctx.shadowBlur = 0;
-  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.font = `bold ${fs(21, 1.6)}px system-ui, sans-serif`;
   ctx.fillStyle = C.white;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 12;
-  ctx.fillText(String(state.score).padStart(6, '0'), px + 14, py + 30);
+  ctx.fillText(String(state.score).padStart(6, '0'), px + 14, by + bh * 0.72);
   ctx.shadowBlur = 0;
 
-  roundRect(ctx, W/2 - 110, py, 220, 40, 10);
-  const sg2 = ctx.createLinearGradient(W/2 - 110, py, W/2 - 110, py + 40);
+  /* — TENGAH : LEVEL / TIER — */
+  const cbx = (W - bw) / 2;
+  roundRect(ctx, cbx, by, bw, bh, 10);
+  const sg2 = ctx.createLinearGradient(cbx, by, cbx, by + bh);
   sg2.addColorStop(0, 'rgba(60, 15, 50, 0.85)');
   sg2.addColorStop(1, 'rgba(20, 4, 25, 0.9)');
   ctx.fillStyle = sg2; ctx.fill();
   ctx.strokeStyle = hex2rgba(C.magenta, 0.7); ctx.lineWidth = 1.5; ctx.stroke();
   ctx.textAlign = 'center';
-  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.font = `bold ${fs(10, 1.6)}px system-ui, sans-serif`;
   ctx.fillStyle = C.magenta;
   ctx.shadowColor = C.magenta; ctx.shadowBlur = 8;
-  ctx.fillText('◈ LEVEL / TIER', W/2, py + 12);
+  ctx.fillText('◈ LEVEL / TIER', W/2, by + bh * 0.30);
   ctx.shadowBlur = 0;
-  ctx.font = 'bold 18px system-ui, sans-serif';
+  ctx.font = `bold ${fs(17, 1.6)}px system-ui, sans-serif`;
   ctx.fillStyle = C.white;
   ctx.shadowColor = C.magenta; ctx.shadowBlur = 12;
-  ctx.fillText(`LV ${state.level}  ·  T${player.tier}`, W/2, py + 30);
+  ctx.fillText(`LV ${state.level}  ·  T${player.tier}`, W/2, by + bh * 0.72);
   ctx.shadowBlur = 0;
 
+  /* — KANAN : HULL + SHIELD + COMBO — */
+  const segW = 24 * u, segH = 14 * u, gap = 5 * u;
+  const totalW = state.maxHp * segW + (state.maxHp - 1) * gap;
+  const startX = W - 20 - totalW;
+
   ctx.textAlign = 'right';
-  ctx.font = 'bold 11px system-ui, sans-serif';
+  ctx.font = `bold ${fs(10, 1.6)}px system-ui, sans-serif`;
   ctx.fillStyle = state.bossMode ? C.amber : C.cyan;
   ctx.shadowColor = state.bossMode ? C.amber : C.cyan;
   ctx.shadowBlur = 8;
-  ctx.fillText(state.bossMode ? '☠ BOSS' : 'ERA ' + state.level, W - 24, py + 12);
+  ctx.fillText(state.bossMode ? '☠ BOSS' : 'ERA ' + state.level, W - 20, by + bh * 0.22);
   ctx.shadowBlur = 0;
 
-  const cmX = W - 260, cmY = py + 2, cmW = 100, cmH = 8;
-  roundRect(ctx, cmX, cmY + 18, cmW, cmH, 4);
-  ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
-  const cmRatio = state.comboMeter / 100;
-  if (cmRatio > 0) {
-    roundRect(ctx, cmX, cmY + 18, cmW * cmRatio, cmH, 4);
-    const cg = ctx.createLinearGradient(cmX, 0, cmX + cmW, 0);
-    cg.addColorStop(0, C.lime); cg.addColorStop(1, C.cyan);
-    ctx.fillStyle = cg;
-    ctx.shadowColor = C.lime; ctx.shadowBlur = 12;
-    ctx.fill(); ctx.shadowBlur = 0;
-  }
-  ctx.textAlign = 'right';
-  ctx.font = 'bold 10px system-ui, sans-serif';
-  ctx.fillStyle = C.cyan;
-  ctx.fillText('COMBO', cmX + cmW, py + 12);
-  ctx.textAlign = 'left';
-  ctx.fillStyle = C.lime;
-  ctx.shadowColor = C.lime; ctx.shadowBlur = 8;
-  ctx.fillText(Math.floor(state.comboMeter) + '%', cmX, py + 12);
-  ctx.shadowBlur = 0;
-
-  ctx.textAlign = 'right';
-  ctx.font = 'bold 11px system-ui, sans-serif';
-  ctx.fillStyle = C.pink;
-  ctx.shadowColor = C.pink; ctx.shadowBlur = 8;
-  ctx.fillText('HULL', W - 24, py + 12);
-  ctx.shadowBlur = 0;
-
-  const segW = 24, segH = 14, gap = 5;
-  const totalW = state.maxHp * segW + (state.maxHp - 1) * gap;
-  const startX = W - 24 - totalW;
   for (let i = 0; i < state.maxHp; i++) {
     const sx = startX + i * (segW + gap);
     const on = i < state.hp;
     const isCrit = state.hp <= 2;
-    roundRect(ctx, sx, py + 22, segW, segH, 4);
+    roundRect(ctx, sx, by + bh * 0.36, segW, segH, 4);
     if (on) {
-      const hg = ctx.createLinearGradient(sx, py + 22, sx, py + 22 + segH);
+      const hg = ctx.createLinearGradient(sx, by, sx, by + bh);
       hg.addColorStop(0, isCrit ? C.pink : C.lime);
       hg.addColorStop(1, isCrit ? '#7a1508' : '#004a30');
       ctx.fillStyle = hg;
@@ -3031,18 +3078,41 @@ function drawHUD() {
     ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1; ctx.stroke();
   }
 
-  const shX = W - 24 - totalW, shW = totalW, shY = py + 40;
-  roundRect(ctx, shX, shY, shW, 5, 2.5);
+  const shY = by + bh * 0.80;
+  roundRect(ctx, startX, shY, totalW, 5 * u, 3);
   ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fill();
   if (state.shield > 0) {
     const sr = state.shield / state.maxShield;
-    roundRect(ctx, shX, shY, shW * sr, 5, 2.5);
-    const sg = ctx.createLinearGradient(shX, 0, shX + shW, 0);
+    roundRect(ctx, startX, shY, totalW * sr, 5 * u, 3);
+    const sg = ctx.createLinearGradient(startX, 0, startX + totalW, 0);
     sg.addColorStop(0, C.cyan); sg.addColorStop(1, C.magenta);
     ctx.fillStyle = sg;
     ctx.shadowColor = C.cyan; ctx.shadowBlur = 10;
     ctx.fill(); ctx.shadowBlur = 0;
   }
+
+  /* Combo meter di bawah panel tengah */
+  const cmW = 200 * u, cmH = 9 * u;
+  const cmX = (W - cmW) / 2;
+  const cmY = by + bh + 10;
+  roundRect(ctx, cmX, cmY, cmW, cmH, cmH / 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.1)'; ctx.fill();
+  const cmRatio = state.comboMeter / 100;
+  if (cmRatio > 0) {
+    roundRect(ctx, cmX, cmY, cmW * cmRatio, cmH, cmH / 2);
+    const cg = ctx.createLinearGradient(cmX, 0, cmX + cmW, 0);
+    cg.addColorStop(0, C.lime); cg.addColorStop(1, C.cyan);
+    ctx.fillStyle = cg;
+    ctx.shadowColor = C.lime; ctx.shadowBlur = 12;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `bold ${fs(10, 1.6)}px system-ui, sans-serif`;
+  ctx.fillStyle = C.lime;
+  ctx.shadowColor = C.lime; ctx.shadowBlur = 8;
+  ctx.fillText('COMBO ' + Math.floor(state.comboMeter) + '%', W/2, cmY + cmH + 10 * u);
+  ctx.shadowBlur = 0;
+
   ctx.restore();
 }
 
@@ -3052,12 +3122,14 @@ function drawToast() {
   ctx.save();
   ctx.globalAlpha = a;
   const cx = W/2, cy = 600;
-  ctx.font = 'bold 26px system-ui, sans-serif';
+  const fToast = fs(26, 1.5);
+  ctx.font = `bold ${fToast}px system-ui, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const metrics = ctx.measureText(state.toastText);
-  const bw = metrics.width + 60;
-  roundRect(ctx, cx - bw/2, cy - 26, bw, 52, 12);
-  const tg = ctx.createLinearGradient(cx - bw/2, cy - 26, cx - bw/2, cy + 26);
+  const bw = metrics.width + 70;
+  const bh = fToast + 34;
+  roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, 12);
+  const tg = ctx.createLinearGradient(cx, cy - bh/2, cx, cy + bh/2);
   tg.addColorStop(0, 'rgba(30, 10, 60, 0.9)');
   tg.addColorStop(1, 'rgba(10, 4, 30, 0.9)');
   ctx.fillStyle = tg; ctx.fill();
@@ -3072,6 +3144,7 @@ function drawToast() {
 
 /* ═══ MENU ═══ */
 function drawMenu() {
+  const mu = Math.min(uiScale, 1.45);
   ctx.save();
   const bgGrad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, H);
   bgGrad.addColorStop(0, 'rgba(20, 5, 45, 0.92)');
@@ -3082,7 +3155,7 @@ function drawMenu() {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
   for (let i = 0; i < 4; i++) {
-    const y = 100 + i * 18;
+    const y = 40 + i * 24 * mu;
     const grd = ctx.createLinearGradient(0, y, W, y);
     const t = (state.gameTime * 0.6 + i) % 1;
     grd.addColorStop(0, 'transparent');
@@ -3097,28 +3170,32 @@ function drawMenu() {
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
 
-  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.font = `bold ${Math.round(20 * mu)}px system-ui, sans-serif`;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 22;
   ctx.fillStyle = C.cyan;
-  ctx.fillText('◈  KUIS SEJARAH — MATERI SMA  ◈', W/2, 115);
+  ctx.fillText('◈  KUIS SEJARAH — MATERI SMA  ◈', W/2, 52);
   ctx.shadowBlur = 0;
 
-  ctx.font = 'bold 76px system-ui, sans-serif';
+  const titleSize = Math.round(62 * Math.min(mu, 1.2));
+  ctx.font = `bold ${titleSize}px system-ui, sans-serif`;
   const tg = ctx.createLinearGradient(W/2 - 400, 0, W/2 + 400, 0);
   tg.addColorStop(0, C.cyan); tg.addColorStop(0.35, C.white);
   tg.addColorStop(0.7, C.magenta); tg.addColorStop(1, C.purple);
   ctx.shadowColor = C.magenta; ctx.shadowBlur = 45;
   ctx.fillStyle = tg;
-  ctx.fillText('PERANG', W/2, 190);
-  ctx.fillText('DUNIA I', W/2, 268);
+  ctx.fillText('PERANG', W/2, 130);
+  ctx.fillText('DUNIA I', W/2, 130 + titleSize * 1.08);
   ctx.shadowBlur = 0;
 
-  ctx.font = 'bold 16px system-ui, sans-serif';
-  ctx.fillStyle = hex2rgba(C.white, 0.75);
-  ctx.fillText('⚡  1914–1918  •  F16 Musuh Terbang Mendekat — Lewat Pesawatmu = MELEDAK!  ⚡', W/2, 318);
+  ctx.font = `bold ${Math.round(15 * mu)}px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.white, 0.78);
+  ctx.fillText('⚡  1914–1918  •  F16 Musuh Terbang Mendekat — Lewat Pesawatmu = MELEDAK!  ⚡', W/2, 252);
 
-  const panelY = 356, panelH = 230;
-  const lx = 120, lw = 460;
+  const panelY = 288, panelH = 300;
+  const lx = 60, lw = 560;
+  const rx = 650, rw = 490;
+
+  /* — panel kiri — */
   roundRect(ctx, lx, panelY, lw, panelH, 18);
   const bgL = ctx.createLinearGradient(lx, panelY, lx, panelY + panelH);
   bgL.addColorStop(0, 'rgba(20, 8, 50, 0.85)');
@@ -3126,35 +3203,39 @@ function drawMenu() {
   ctx.fillStyle = bgL; ctx.fill();
   ctx.strokeStyle = hex2rgba(C.cyan, 0.7); ctx.lineWidth = 2; ctx.stroke();
 
-  ctx.font = 'bold 17px system-ui, sans-serif';
+  ctx.font = `bold ${Math.round(16 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'left';
   ctx.fillStyle = C.cyan;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 12;
-  ctx.fillText('◆  KONTROL MISI', lx + 30, panelY + 32);
+  ctx.fillText('◆  KONTROL MISI', lx + 28, panelY + 34);
   ctx.shadowBlur = 0;
 
   const rules = [
     ['[1] [2] [3] [4]', 'Tembak jawaban 1-4'],
-    ['KLIK / TAP', 'Tembak pesawat F16 langsung'],
-    ['[SPASI]', 'Mulai / Ulangi permainan'],
+    ['KLIK / TAP', 'Tembak pesawat F16'],
+    ['[SPASI]', 'Mulai / Ulangi'],
     ['← → / A D', 'Geser pesawat'],
   ];
+  const keyBoxW = 168 * mu;
+  const keyBoxH = 30 * mu;
+  const rowH = 40 * mu;
+  const descX = lx + 28 + keyBoxW + 20;
   rules.forEach((r, i) => {
-    const yy = panelY + 76 + i * 32;
-    roundRect(ctx, lx + 30, yy - 12, 170, 24, 6);
+    const yy = panelY + 80 + i * rowH;
+    roundRect(ctx, lx + 28, yy - keyBoxH / 2, keyBoxW, keyBoxH, 6);
     ctx.fillStyle = hex2rgba(C.cyan, 0.12); ctx.fill();
     ctx.strokeStyle = hex2rgba(C.cyan, 0.5); ctx.lineWidth = 1; ctx.stroke();
     ctx.fillStyle = C.cyan;
-    ctx.font = 'bold 13px "Consolas", monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(r[0], lx + 115, yy + 1);
+    ctx.font = `bold ${Math.round(13 * mu)}px "Consolas", monospace`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(r[0], lx + 28 + keyBoxW / 2, yy + 1);
     ctx.textAlign = 'left';
-    ctx.font = 'bold 15px system-ui, sans-serif';
+    ctx.font = `bold ${Math.round(14 * mu)}px system-ui, sans-serif`;
     ctx.fillStyle = C.white;
-    ctx.fillText(r[1], lx + 220, yy + 1);
+    ctx.fillText(r[1], descX, yy + 1);
   });
 
-  const rx = W - 580, rw = 460;
+  /* — panel kanan — */
   roundRect(ctx, rx, panelY, rw, panelH, 18);
   const bgR = ctx.createLinearGradient(rx, panelY, rx, panelY + panelH);
   bgR.addColorStop(0, 'rgba(60, 8, 45, 0.85)');
@@ -3162,11 +3243,11 @@ function drawMenu() {
   ctx.fillStyle = bgR; ctx.fill();
   ctx.strokeStyle = hex2rgba(C.magenta, 0.7); ctx.lineWidth = 2; ctx.stroke();
 
-  ctx.font = 'bold 17px system-ui, sans-serif';
+  ctx.font = `bold ${Math.round(16 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'left';
   ctx.fillStyle = C.magenta;
   ctx.shadowColor = C.magenta; ctx.shadowBlur = 12;
-  ctx.fillText('◆  ANCAMAN F16', rx + 30, panelY + 32);
+  ctx.fillText('◆  ANCAMAN F16', rx + 28, panelY + 34);
   ctx.shadowBlur = 0;
 
   const systems = [
@@ -3175,25 +3256,27 @@ function drawMenu() {
     ['LEWAT PESAWATMU', 'Perisai/Darah langsung jatuh'],
     ['JAWAB BENAR', '3 F16 kabur, 1 hancur lebur'],
   ];
+  const sysColors = [C.cyan, C.lime, C.amber, C.pink];
   systems.forEach((s, i) => {
-    const yy = panelY + 74 + i * 38;
-    ctx.fillStyle = [C.cyan, C.lime, C.amber, C.pink][i];
-    ctx.fillRect(rx + 30, yy - 8, 4, 20);
-    ctx.font = 'bold 13px "Consolas", monospace';
-    ctx.fillStyle = [C.cyan, C.lime, C.amber, C.pink][i];
-    ctx.shadowColor = [C.cyan, C.lime, C.amber, C.pink][i];
+    const yy = panelY + 76 + i * rowH;
+    ctx.fillStyle = sysColors[i];
+    ctx.fillRect(rx + 28, yy - 9 * mu, 4, 20 * mu);
+    ctx.font = `bold ${Math.round(13 * mu)}px "Consolas", monospace`;
+    ctx.fillStyle = sysColors[i];
+    ctx.shadowColor = sysColors[i];
     ctx.shadowBlur = 8;
-    ctx.fillText(s[0], rx + 46, yy - 2);
+    ctx.fillText(s[0], rx + 44, yy - 6 * mu);
     ctx.shadowBlur = 0;
-    ctx.font = '13px system-ui, sans-serif';
-    ctx.fillStyle = hex2rgba(C.white, 0.85);
-    ctx.fillText(s[1], rx + 46, yy + 16);
+    ctx.font = `${Math.round(13 * mu)}px system-ui, sans-serif`;
+    ctx.fillStyle = hex2rgba(C.white, 0.88);
+    ctx.fillText(s[1], rx + 44, yy + 14 * mu);
   });
 
+  /* — tombol mulai — */
   const blink = 0.65 + Math.sin(state.gameTime * 4) * 0.35;
   ctx.globalAlpha = blink;
-  const btnW = 520, btnH = 62;
-  const btnX = (W - btnW) / 2, btnY = panelY + panelH + 26;
+  const btnW = 560, btnH = 68;
+  const btnX = (W - btnW) / 2, btnY = 612;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const bg = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
   bg.addColorStop(0, hex2rgba(C.cyan, 0.18));
@@ -3203,7 +3286,7 @@ function drawMenu() {
   ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.5;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 26; ctx.stroke();
   ctx.shadowBlur = 0;
-  ctx.font = 'bold 26px system-ui, sans-serif';
+  ctx.font = `bold ${Math.round(24 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = C.white;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 22;
@@ -3212,6 +3295,7 @@ function drawMenu() {
 }
 
 function drawGameOver() {
+  const mu = Math.min(uiScale, 1.45);
   ctx.save();
   const bgGrad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, H);
   bgGrad.addColorStop(0, 'rgba(60, 5, 35, 0.92)');
@@ -3228,19 +3312,20 @@ function drawGameOver() {
   ctx.restore();
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.font = 'bold 72px system-ui, sans-serif';
+  const tSize = Math.round(66 * Math.min(mu, 1.15));
+  ctx.font = `bold ${tSize}px system-ui, sans-serif`;
   const ox = (Math.random()-0.5)*4, oy = (Math.random()-0.5)*4;
   ctx.fillStyle = C.pink;
   ctx.shadowColor = C.pink; ctx.shadowBlur = 40;
-  ctx.fillText('MISI GAGAL', W/2 + ox, 155 + oy);
+  ctx.fillText('MISI GAGAL', W/2 + ox, 138 + oy);
   ctx.fillStyle = C.white; ctx.shadowBlur = 0;
-  ctx.fillText('MISI GAGAL', W/2, 155);
+  ctx.fillText('MISI GAGAL', W/2, 138);
 
-  ctx.font = 'bold 18px system-ui, sans-serif';
-  ctx.fillStyle = hex2rgba(C.white, 0.7);
-  ctx.fillText('Skuadron F16 musuh berhasil menerobos pertahananmu...', W/2, 208);
+  ctx.font = `bold ${Math.round(15 * mu)}px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.white, 0.72);
+  ctx.fillText('Skuadron F16 musuh berhasil menerobos pertahananmu...', W/2, 198);
 
-  const px = 280, py = 260, pw = W - 560, ph = 260;
+  const px = 240, py = 232, pw = W - 480, ph = 200 + 62 * mu;
   roundRect(ctx, px, py, pw, ph, 20);
   const bg = ctx.createLinearGradient(px, py, px, py + ph);
   bg.addColorStop(0, 'rgba(20, 5, 45, 0.94)');
@@ -3248,11 +3333,11 @@ function drawGameOver() {
   ctx.fillStyle = bg; ctx.fill();
   ctx.strokeStyle = hex2rgba(C.pink, 0.65); ctx.lineWidth = 2.5; ctx.stroke();
 
-  ctx.font = 'bold 16px system-ui, sans-serif';
+  ctx.font = `bold ${Math.round(15 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'left';
   ctx.fillStyle = C.pink;
   ctx.shadowColor = C.pink; ctx.shadowBlur = 10;
-  ctx.fillText('◆  LAPORAN MISI', px + 30, py + 34);
+  ctx.fillText('◆  LAPORAN MISI', px + 30, py + 32);
   ctx.shadowBlur = 0;
 
   const total = state.hitCorrect + state.hitWrong;
@@ -3265,25 +3350,26 @@ function drawGameOver() {
     ['AKURASI', total > 0 ? Math.round(state.hitCorrect / total * 100) + '%' : '—', C.cyan],
   ];
   const colW = (pw - 60) / 2;
+  const rowHH = 50 * mu;
   stats.forEach((s, i) => {
     const col = i % 2, row = Math.floor(i / 2);
-    const x = px + 30 + col * colW, y = py + 76 + row * 56;
+    const x = px + 30 + col * colW, y = py + 72 + row * rowHH;
     ctx.fillStyle = s[2];
-    ctx.fillRect(x - 12, y - 8, 3, 32);
+    ctx.fillRect(x - 12, y - 9, 3, 34 * mu);
     ctx.textAlign = 'left';
-    ctx.font = 'bold 12px system-ui, sans-serif';
-    ctx.fillStyle = hex2rgba(C.white, 0.7);
+    ctx.font = `bold ${Math.round(11 * mu)}px system-ui, sans-serif`;
+    ctx.fillStyle = hex2rgba(C.white, 0.72);
     ctx.fillText(s[0], x, y);
-    ctx.font = 'bold 28px system-ui, sans-serif';
+    ctx.font = `bold ${Math.round(26 * mu)}px system-ui, sans-serif`;
     ctx.fillStyle = s[2];
     ctx.shadowColor = s[2]; ctx.shadowBlur = 16;
-    ctx.fillText(s[1], x, y + 26);
+    ctx.fillText(s[1], x, y + 26 * mu);
     ctx.shadowBlur = 0;
   });
 
   const blink = 0.6 + Math.sin(state.gameTime * 4) * 0.4;
   ctx.globalAlpha = blink;
-  const btnW = 500, btnH = 58;
+  const btnW = 520, btnH = 62;
   const btnX = (W - btnW) / 2, btnY = 560;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const btnG = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -3294,7 +3380,7 @@ function drawGameOver() {
   ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.5;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 26; ctx.stroke();
   ctx.shadowBlur = 0;
-  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.font = `bold ${Math.round(22 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = C.white;
   ctx.shadowColor = C.cyan; ctx.shadowBlur = 20;
@@ -3304,6 +3390,7 @@ function drawGameOver() {
 
 /* ═══ MASTER RENDER ═══ */
 function render() {
+  ctx.setTransform(baseScale, 0, 0, baseScale, 0, 0);
   ctx.save();
   if (state.shake > 0) {
     ctx.translate((Math.random()-0.5) * state.shake, (Math.random()-0.5) * state.shake);
@@ -3359,7 +3446,6 @@ function loop(ts) {
   if (dt > 0.05) dt = 0.05;
   if (dt < 0) dt = 0;
 
-  // Jika sedang portrait-locked (overlay rotate aktif), skip update/render agar hemat baterai
   if (document.body.classList.contains('portrait-locked')) {
     requestAnimationFrame(loop);
     return;
@@ -3401,10 +3487,10 @@ cvs.addEventListener('pointerdown', (evt) => {
     for (let i = 0; i < enemies.length; i++) {
       const e = enemies[i];
       if (!e.alive || e.dying > 0 || e.launching || e.fleeing) continue;
-      const inShip = x >= e.x - 62 && x <= e.x + 62 && y >= e.y - 55 && y <= e.y + 55;
+      const inShip = x >= e.x - 62 && x <= e.x + 62 && y >= e.y - 60 && y <= e.y + 60;
       const panelCY = e.y + PANEL_BELOW_GAP;
-      const inPanel = x >= e.x - PANEL_W/2 - 12 && x <= e.x + PANEL_W/2 + 12
-                   && y >= panelCY - PANEL_H/2 - 12 && y <= panelCY + PANEL_H/2 + 12;
+      const inPanel = x >= e.x - PANEL_W/2 - 14 && x <= e.x + PANEL_W/2 + 14
+                   && y >= panelCY - PANEL_H/2 - 14 && y <= panelCY + PANEL_H/2 + 14;
       if (inShip || inPanel) { fire(i); hit = true; return; }
     }
     if (!hit) {
