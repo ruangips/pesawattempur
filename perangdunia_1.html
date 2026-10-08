@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -5,13 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#06010f">
+<meta name="theme-color" content="#0a0510">
 <title>Perang Dunia I: Armada Elite</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     width: 100%; height: 100%;
-    background: #000205; overflow: hidden;
+    background: #050208; overflow: hidden;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     touch-action: none; overscroll-behavior: none;
     position: fixed; top: 0; left: 0;
@@ -30,11 +31,11 @@
     max-width: 100%; max-height: 100%;
   }
   @media (min-width: 901px) {
-    canvas { border-radius: 8px; box-shadow: 0 0 60px rgba(0, 240, 255, 0.25); }
+    canvas { border-radius: 8px; box-shadow: 0 0 60px rgba(255, 100, 40, 0.25); }
   }
   #rotateOverlay {
     display: none; position: fixed; inset: 0; z-index: 99999;
-    background: radial-gradient(circle at 50% 40%, #1a0a35 0%, #06010f 55%, #020005 100%);
+    background: radial-gradient(circle at 50% 40%, #2a1008 0%, #0a0510 55%, #020005 100%);
     align-items: center; justify-content: center; flex-direction: column;
     text-align: center; padding: 32px; overflow: hidden;
     color: #fff; font-family: 'Segoe UI', system-ui, sans-serif;
@@ -42,19 +43,19 @@
   }
   #rotateOverlay::before {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    background: radial-gradient(circle at 20% 80%, rgba(0,240,255,0.18), transparent 55%),
-                radial-gradient(circle at 80% 20%, rgba(255,0,160,0.18), transparent 55%);
+    background: radial-gradient(circle at 20% 80%, rgba(255,120,30,0.18), transparent 55%),
+                radial-gradient(circle at 80% 20%, rgba(200,40,20,0.18), transparent 55%);
     animation: overlayPulse 4s ease-in-out infinite alternate;
   }
   @keyframes overlayPulse { from { opacity: 0.6; } to { opacity: 1; } }
   .rotateInner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 360px; }
-  .phoneIcon { font-size: 100px; line-height: 1; display: inline-block; animation: phoneRotate 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; filter: drop-shadow(0 0 30px rgba(0,240,255,0.85)); }
+  .phoneIcon { font-size: 100px; line-height: 1; display: inline-block; animation: phoneRotate 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; filter: drop-shadow(0 0 30px rgba(255,120,40,0.85)); }
   @keyframes phoneRotate { 0%, 15% { transform: rotate(0deg); } 50%, 65% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
-  #rotateOverlay .title { font-size: 22px; font-weight: 800; letter-spacing: 4px; color: #00f0ff; text-shadow: 0 0 20px rgba(0,240,255,0.9); margin-top: 6px; }
+  #rotateOverlay .title { font-size: 22px; font-weight: 800; letter-spacing: 4px; color: #ffaa44; text-shadow: 0 0 20px rgba(255,170,68,0.9); margin-top: 6px; }
   #rotateOverlay .subtitle { font-size: 14px; color: rgba(255,255,255,0.78); line-height: 1.65; max-width: 320px; }
-  #rotateOverlay .subtitle b { color: #ff44aa; text-shadow: 0 0 12px rgba(255,68,170,0.85); }
-  #rotateOverlay .hintRow { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 18px; border-radius: 12px; background: rgba(0, 240, 255, 0.08); border: 1px solid rgba(0, 240, 255, 0.35); font-size: 12px; color: rgba(0, 240, 255, 0.9); }
-  #rotateOverlay .hintRow .dot { width: 8px; height: 8px; border-radius: 50%; background: #00ffb0; box-shadow: 0 0 12px #00ffb0; animation: hintDot 1.4s ease-in-out infinite; }
+  #rotateOverlay .subtitle b { color: #ff6644; text-shadow: 0 0 12px rgba(255,100,68,0.85); }
+  #rotateOverlay .hintRow { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 18px; border-radius: 12px; background: rgba(255, 150, 60, 0.08); border: 1px solid rgba(255, 150, 60, 0.35); font-size: 12px; color: rgba(255, 180, 90, 0.9); }
+  #rotateOverlay .hintRow .dot { width: 8px; height: 8px; border-radius: 50%; background: #ffaa44; box-shadow: 0 0 12px #ffaa44; animation: hintDot 1.4s ease-in-out infinite; }
   @keyframes hintDot { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
   body.portrait-locked #rotateOverlay { display: flex; }
   body.portrait-locked #gameWrap { display: none !important; }
@@ -118,7 +119,6 @@ let PANEL_BELOW_GAP = 82;
 let PANEL_W = 286;
 let PANEL_H = 78;
 let QP_X = 130, QP_Y = 70, QP_W = 940, QP_H = 116;
-/* ▲ DIPERBESAR dari 0.68 → 0.88 agar F16 lebih jelas */
 const ENEMY_SCALE = 0.88;
 
 const isCoarsePointer = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
@@ -361,190 +361,586 @@ let spaceObjects = [];
 let engineTrails = [];
 let qShipDebris = [];
 let heatDistortions = [];
+let distantFlashes = []; // kilatan artileri jauh
 
-/* ═══ BACKGROUND ═══ */
-function makeSpaceObject(atTop) {
+/* ═══════════════════════════════════════════════════════════════
+   ⚔  LATAR PERANG DUNIA I — SILUET EROPA 1914–1918  ⚔
+   Menggantikan objek luar angkasa dengan siluet tentara, artileri,
+   tank Mark I, biplan, reruntuhan bangunan, pohon gundul, balon
+   barrage, kolom asap, dan bara api.
+   ═══════════════════════════════════════════════════════════════ */
+
+function makeWarObject(atTop) {
   const r = Math.random();
   let type;
-  if (r < 0.38) type = 'asteroid';
-  else if (r < 0.58) type = 'moon';
-  else if (r < 0.75) type = 'planet';
-  else if (r < 0.86) type = 'gasGiant';
-  else if (r < 0.95) type = 'comet';
-  else type = 'station';
-  let size, hue, alpha, v;
-  switch (type) {
-    case 'asteroid': size = 8 + Math.random() * 32;  hue = 18 + Math.random() * 25;  alpha = 0.35 + Math.random() * 0.3; v = 12 + Math.random() * 30; break;
-    case 'moon':     size = 18 + Math.random() * 38; hue = 200 + Math.random() * 60; alpha = 0.3 + Math.random() * 0.25; v = 8 + Math.random() * 18;  break;
-    case 'planet':   size = 30 + Math.random() * 65; hue = Math.random() * 360;      alpha = 0.32 + Math.random() * 0.25; v = 5 + Math.random() * 14;  break;
-    case 'gasGiant': size = 90 + Math.random() * 140;hue = Math.random() * 360;      alpha = 0.22 + Math.random() * 0.2; v = 3 + Math.random() * 8;   break;
-    case 'comet':    size = 4 + Math.random() * 6;   hue = 175 + Math.random() * 70; alpha = 0.65 + Math.random() * 0.2; v = 40 + Math.random() * 50; break;
-    case 'station':  size = 22 + Math.random() * 26; hue = 180 + Math.random() * 90; alpha = 0.45;                       v = 10 + Math.random() * 14; break;
-  }
-  const o = {
-    type, size, hue, alpha, v,
-    x: Math.random() * W,
-    y: atTop ? -size * 3 - Math.random() * H * 0.5 : Math.random() * H,
-    rot: Math.random() * Math.PI * 2,
-    rotV: (Math.random() - 0.5) * 0.5,
-    detail: Math.random(),
-    shape: [], craters: [],
-    hasRing: type === 'planet' && Math.random() < 0.35,
-    ringTilt: (Math.random() - 0.5) * 0.6,
-    bandSeed: Math.random() * 100,
+  if      (r < 0.17) type = 'soldier';
+  else if (r < 0.29) type = 'squad';
+  else if (r < 0.40) type = 'artillery';
+  else if (r < 0.51) type = 'ruin';
+  else if (r < 0.62) type = 'tree';
+  else if (r < 0.71) type = 'tank';
+  else if (r < 0.80) type = 'balloon';
+  else if (r < 0.89) type = 'biplane';
+  else                type = 'smokeColumn';
+
+  /* Tiga lapisan kedalaman */
+  const layerRoll = Math.random();
+  let layer;
+  if (layerRoll < 0.45) layer = 0;      // jauh
+  else if (layerRoll < 0.80) layer = 1; // sedang
+  else layer = 2;                        // dekat
+
+  const layerSizes = {
+    soldier:     [24, 38, 54],
+    squad:       [22, 34, 48],
+    artillery:   [55, 82, 115],
+    ruin:        [80, 130, 190],
+    tree:        [55, 85, 120],
+    tank:        [55, 85, 120],
+    balloon:     [70, 105, 145],
+    biplane:     [45, 70, 100],
+    smokeColumn: [90, 140, 200],
   };
-  if (type === 'asteroid') {
-    const pts = 7 + Math.floor(Math.random() * 5);
-    for (let j = 0; j < pts; j++) { const a = (j / pts) * Math.PI * 2; o.shape.push({ a, r: 0.65 + Math.random() * 0.55 }); }
-    const nc = 2 + Math.floor(Math.random() * 4);
-    for (let j = 0; j < nc; j++) o.craters.push({ x: (Math.random() - 0.5) * size * 1.1, y: (Math.random() - 0.5) * size * 1.1, r: size * (0.08 + Math.random() * 0.18) });
-  } else if (type === 'moon' || type === 'planet') {
-    const nc = 2 + Math.floor(Math.random() * 5);
-    for (let j = 0; j < nc; j++) o.craters.push({ x: (Math.random() - 0.5) * size * 1.2, y: (Math.random() - 0.5) * size * 1.2, r: size * (0.07 + Math.random() * 0.16) });
-  }
-  return o;
+  const layerAlphas = [0.30, 0.52, 0.78];
+  const layerVs     = [10, 24, 48];
+
+  const size = layerSizes[type][layer] * (0.85 + Math.random() * 0.30);
+
+  /* Warna siluet: coklat/abu gelap dengan sedikit rona perang */
+  const palettes = [
+    [ 18, 12, 22],   // violet gelap (jauh)
+    [ 22, 12, 10],   // cokelat gelap
+    [ 14,  8,  6],   // cokelat tua
+    [ 20, 14, 12],   // tanah
+  ];
+  const pal = palettes[Math.floor(Math.random() * palettes.length)];
+
+  return {
+    type, size, layer,
+    x: Math.random() * W,
+    y: atTop ? -size * 2 - Math.random() * H * 0.55 : Math.random() * H,
+    v: layerVs[layer] * (0.7 + Math.random() * 0.6),
+    alpha: layerAlphas[layer],
+    flip: Math.random() < 0.5 ? 1 : -1,
+    rot: 0, rotV: (Math.random() - 0.5) * 0.15,
+    pal,
+    phase: Math.random() * Math.PI * 2,
+    variant: Math.floor(Math.random() * 3),
+  };
 }
 
 function initBackground() {
+  /* ═══ Bara api & abu (menggantikan bintang) ═══ */
   stars = [];
-  for (let i = 0; i < 340; i++) {
-    const layer = i < 200 ? 0 : i < 290 ? 1 : 2;
+  for (let i = 0; i < 260; i++) {
+    const layer = i < 160 ? 0 : i < 220 ? 1 : 2;
     stars.push({
-      x: Math.random() * W, y: Math.random() * H,
-      s: layer === 0 ? Math.random()*0.8+0.3 : layer === 1 ? Math.random()*1.4+0.6 : Math.random()*2.2+1,
-      v: layer === 0 ? 18 : layer === 1 ? 45 : 95,
-      a: layer === 0 ? 0.3 : layer === 1 ? 0.55 : 0.85,
-      layer, twinkle: Math.random() * Math.PI * 2,
+      x: Math.random() * W,
+      y: Math.random() * H,
+      s: layer === 0 ? Math.random() * 0.9 + 0.35
+        : layer === 1 ? Math.random() * 1.5 + 0.65
+        : Math.random() * 2.3 + 1.1,
+      v: layer === 0 ? 14 : layer === 1 ? 38 : 82,
+      a: layer === 0 ? 0.28 : layer === 1 ? 0.52 : 0.82,
+      layer,
+      twinkle: Math.random() * Math.PI * 2,
+      isEmber: Math.random() < 0.68,
+      hue: 15 + Math.random() * 28,   // jingga–merah
+      drift: (Math.random() - 0.5) * 22,
     });
   }
+
+  /* ═══ Awan asap (menggantikan nebula) ═══ */
   nebulaClouds = [];
-  const hues = [200, 300, 180, 320, 260, 220];
-  for (let i = 0; i < 6; i++) nebulaClouds.push({ x: Math.random() * W, y: Math.random() * H, r: 180 + Math.random() * 260, v: 4 + Math.random() * 10, hue: hues[i], a: 0.035 + Math.random() * 0.04 });
+  for (let i = 0; i < 7; i++) {
+    nebulaClouds.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 200 + Math.random() * 320,
+      v: 5 + Math.random() * 12,
+      hue: 18 + Math.random() * 20,     // coklat hangat
+      a: 0.05 + Math.random() * 0.065,
+      kind: Math.random() < 0.55 ? 'smoke' : 'haze',
+    });
+  }
+
+  /* ═══ Siluet perang ═══ */
   spaceObjects = [];
-  for (let i = 0; i < 16; i++) spaceObjects.push(makeSpaceObject(false));
+  for (let i = 0; i < 22; i++) spaceObjects.push(makeWarObject(false));
+
+  /* ═══ Kilatan artileri jauh ═══ */
+  distantFlashes = [];
 }
+
 initBackground();
 bgReady = true;
 
-function drawSpaceObjects() {
-  for (const o of spaceObjects) {
+/* ───────────────────────────────────────────────────────────────
+   Fungsi gambar siluet individu
+   Setiap fungsi menggambar dalam ruang lokal, dengan `s` = ukuran.
+   Siluet "duduk" di atas sumbu y = 0 (kaki/base di y=0).
+   ─────────────────────────────────────────────────────────────── */
+
+function silColor(pal, a) {
+  return `rgba(${pal[0]}, ${pal[1]}, ${pal[2]}, ${a})`;
+}
+
+/* Tentara PD I (Brodie helmet + senapan) */
+function drawSilSoldier(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Helm Brodie (pinggir lebar + kubah) */
+  ctx.beginPath();
+  ctx.ellipse(0, -s * 1.36, s * 0.34, s * 0.09, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -s * 1.34, s * 0.21, Math.PI, 0);
+  ctx.fill();
+  /* Kepala */
+  ctx.fillRect(-s * 0.12, -s * 1.30, s * 0.24, s * 0.22);
+  /* Badan (torso) */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.24, -s * 1.08);
+  ctx.lineTo( s * 0.24, -s * 1.08);
+  ctx.lineTo( s * 0.20, -s * 0.34);
+  ctx.lineTo(-s * 0.20, -s * 0.34);
+  ctx.closePath();
+  ctx.fill();
+  /* Lengan kiri (memegang senapan) */
+  ctx.fillRect(-s * 0.30, -s * 1.02, s * 0.10, s * 0.50);
+  /* Lengan kanan */
+  ctx.fillRect( s * 0.22, -s * 1.02, s * 0.10, s * 0.42);
+  /* Senapan Lee-Enfield diagonal */
+  ctx.save();
+  ctx.translate(s * 0.02, -s * 0.72);
+  ctx.rotate(0.42);
+  ctx.fillRect(-s * 0.035, -s * 0.58, s * 0.07, s * 1.05);
+  ctx.fillRect(-s * 0.08,  s * 0.28, s * 0.16, s * 0.06); // popor
+  ctx.restore();
+  /* Kaki */
+  ctx.fillRect(-s * 0.18, -s * 0.34, s * 0.14, s * 0.34);
+  ctx.fillRect( s * 0.04, -s * 0.34, s * 0.14, s * 0.34);
+  /* Sepatu bot */
+  ctx.fillRect(-s * 0.22, -s * 0.05, s * 0.20, s * 0.05);
+  ctx.fillRect( s * 0.02, -s * 0.05, s * 0.20, s * 0.05);
+}
+
+/* Regu tentara (3–5 orang berdiri berdekatan) */
+function drawSilSquad(s, pal, a) {
+  const count = 3 + Math.floor(Math.random() * 3);
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const ox = (i - (count - 1) / 2) * s * 0.55;
+    const oy = (i % 2) * s * 0.05;
     ctx.save();
-    ctx.translate(o.x, o.y);
-    if (o.type === 'asteroid') {
-      ctx.rotate(o.rot);
-      ctx.globalAlpha = o.alpha;
-      ctx.beginPath();
-      for (let i = 0; i < o.shape.length; i++) {
-        const p = o.shape[i];
-        const px = Math.cos(p.a) * o.size * p.r;
-        const py = Math.sin(p.a) * o.size * p.r;
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      const g = ctx.createRadialGradient(-o.size*0.35, -o.size*0.35, 0, 0, 0, o.size*1.2);
-      g.addColorStop(0, `hsl(${o.hue}, 28%, 32%)`);
-      g.addColorStop(0.55, `hsl(${o.hue}, 22%, 18%)`);
-      g.addColorStop(1, `hsl(${o.hue}, 18%, 7%)`);
-      ctx.fillStyle = g; ctx.fill();
-      ctx.strokeStyle = `hsla(${o.hue}, 35%, 42%, 0.5)`; ctx.lineWidth = 0.8; ctx.stroke();
-      ctx.fillStyle = `hsla(${o.hue}, 30%, 10%, 0.75)`;
-      for (const c of o.craters) { ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill(); }
-    } else if (o.type === 'moon' || o.type === 'planet') {
-      ctx.globalAlpha = o.alpha;
-      if (o.hasRing) {
-        ctx.save();
-        ctx.rotate(o.ringTilt);
-        ctx.strokeStyle = `hsla(${o.hue}, 40%, 55%, 0.35)`; ctx.lineWidth = o.size * 0.12;
-        ctx.beginPath(); ctx.ellipse(0, 0, o.size * 1.7, o.size * 0.4, 0, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-      }
-      const g = ctx.createRadialGradient(-o.size*0.35, -o.size*0.35, 0, 0, 0, o.size);
-      g.addColorStop(0, `hsl(${o.hue}, 55%, 55%)`);
-      g.addColorStop(0.55, `hsl(${o.hue}, 48%, 32%)`);
-      g.addColorStop(1, `hsl(${o.hue}, 50%, 10%)`);
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(0, 0, o.size, 0, Math.PI*2); ctx.fill();
-      ctx.save();
-      ctx.beginPath(); ctx.arc(0, 0, o.size, 0, Math.PI*2); ctx.clip();
-      const sh = ctx.createRadialGradient(o.size*0.6, o.size*0.6, 0, 0, 0, o.size*1.05);
-      sh.addColorStop(0, 'rgba(0,0,0,0.85)'); sh.addColorStop(0.65, 'rgba(0,0,0,0.4)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = sh; ctx.fillRect(-o.size, -o.size, o.size*2, o.size*2);
-      ctx.restore();
-      ctx.fillStyle = `hsla(${o.hue}, 50%, 14%, 0.6)`;
-      for (const c of o.craters) {
-        ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = `hsla(${o.hue}, 60%, 75%, 0.15)`;
-        ctx.beginPath(); ctx.arc(c.x - c.r*0.3, c.y - c.r*0.3, c.r*0.6, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = `hsla(${o.hue}, 50%, 14%, 0.6)`;
-      }
-    } else if (o.type === 'gasGiant') {
-      ctx.globalAlpha = o.alpha;
-      ctx.save();
-      ctx.beginPath(); ctx.arc(0, 0, o.size, 0, Math.PI*2); ctx.clip();
-      const g = ctx.createRadialGradient(-o.size*0.3, -o.size*0.3, 0, 0, 0, o.size*1.1);
-      g.addColorStop(0, `hsl(${o.hue}, 55%, 55%)`);
-      g.addColorStop(0.6, `hsl(${o.hue}, 48%, 32%)`);
-      g.addColorStop(1, `hsl(${o.hue}, 40%, 14%)`);
-      ctx.fillStyle = g; ctx.fillRect(-o.size, -o.size, o.size*2, o.size*2);
-      const bands = 10;
-      for (let i = 0; i < bands; i++) {
-        const t = i / bands;
-        const by = -o.size + t * o.size * 2;
-        const bh = o.size * 2 / bands;
-        const hueShift = Math.sin(i * 0.9 + o.bandSeed) * 22;
-        const light = 28 + Math.sin(i * 1.7 + o.bandSeed) * 16 + 16;
-        ctx.fillStyle = `hsla(${o.hue + hueShift}, 55%, ${light}%, 0.35)`;
-        ctx.fillRect(-o.size, by, o.size*2, bh * 0.85);
-      }
-      const sh = ctx.createRadialGradient(o.size*0.55, o.size*0.55, 0, 0, 0, o.size*1.1);
-      sh.addColorStop(0, 'rgba(0,0,0,0.85)'); sh.addColorStop(0.5, 'rgba(0,0,0,0.4)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = sh; ctx.fillRect(-o.size, -o.size, o.size*2, o.size*2);
-      ctx.restore();
-    } else if (o.type === 'comet') {
-      ctx.globalAlpha = o.alpha;
-      const tailLen = o.size * 14;
-      const tg = ctx.createLinearGradient(0, 0, 0, -tailLen);
-      tg.addColorStop(0, `hsla(${o.hue}, 95%, 75%, 0.8)`);
-      tg.addColorStop(0.35, `hsla(${o.hue}, 85%, 60%, 0.3)`);
-      tg.addColorStop(1, 'transparent');
-      ctx.fillStyle = tg;
-      ctx.beginPath();
-      ctx.moveTo(-o.size*0.9, 0);
-      ctx.quadraticCurveTo(0, -tailLen*0.5, 0, -tailLen);
-      ctx.quadraticCurveTo(0, -tailLen*0.5, o.size*0.9, 0);
-      ctx.closePath(); ctx.fill();
-      const hg = ctx.createRadialGradient(0, 0, 0, 0, 0, o.size*2.4);
-      hg.addColorStop(0, '#ffffff');
-      hg.addColorStop(0.35, `hsl(${o.hue}, 95%, 78%)`);
-      hg.addColorStop(1, 'transparent');
-      ctx.fillStyle = hg;
-      ctx.beginPath(); ctx.arc(0, 0, o.size*2.4, 0, Math.PI*2); ctx.fill();
-    } else if (o.type === 'station') {
-      ctx.rotate(o.rot);
-      ctx.globalAlpha = o.alpha;
-      ctx.strokeStyle = `hsl(${o.hue}, 65%, 55%)`;
-      ctx.fillStyle = `hsla(${o.hue}, 55%, 12%, 0.85)`;
-      ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.arc(0, 0, o.size * 0.28, 0, Math.PI*2); ctx.fill(); ctx.stroke();
-      for (let i = 0; i < 4; i++) {
-        const a = (i / 4) * Math.PI * 2;
-        const px = Math.cos(a) * o.size * 0.28;
-        const py = Math.sin(a) * o.size * 0.28;
-        const ex = Math.cos(a) * o.size;
-        const ey = Math.sin(a) * o.size;
-        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke();
-        ctx.save();
-        ctx.translate(ex, ey);
-        ctx.rotate(a + Math.PI/2);
-        ctx.fillStyle = `hsla(${o.hue}, 65%, 20%, 0.85)`;
-        ctx.fillRect(-o.size*0.42, -2.5, o.size*0.84, 5);
-        ctx.strokeRect(-o.size*0.42, -2.5, o.size*0.84, 5);
-        ctx.restore();
-      }
-    }
+    ctx.translate(ox, oy);
+    drawSilSoldier(s, pal, a);
     ctx.restore();
   }
+  ctx.restore();
 }
+
+/* Artileri berat (barrel besar, roda, shield) */
+function drawSilArtillery(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Roda besar */
+  ctx.beginPath();
+  ctx.arc(s * 0.28, -s * 0.32, s * 0.34, 0, Math.PI * 2);
+  ctx.fill();
+  /* Lubang roda */
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.beginPath();
+  ctx.arc(s * 0.28, -s * 0.32, s * 0.14, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  /* Body / cradle */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.55, -s * 0.55);
+  ctx.lineTo( s * 0.60, -s * 0.55);
+  ctx.lineTo( s * 0.55, -s * 0.14);
+  ctx.lineTo(-s * 0.55, -s * 0.14);
+  ctx.closePath();
+  ctx.fill();
+  /* Shield pelindung meriam */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.52, -s * 0.90);
+  ctx.lineTo(-s * 0.12, -s * 0.95);
+  ctx.lineTo(-s * 0.12, -s * 0.30);
+  ctx.lineTo(-s * 0.52, -s * 0.30);
+  ctx.closePath();
+  ctx.fill();
+  /* Barrel meriam menembak ke atas */
+  ctx.save();
+  ctx.translate(-s * 0.10, -s * 0.65);
+  ctx.rotate(-0.55);
+  ctx.fillRect(-s * 0.09, -s * 0.75, s * 0.18, s * 1.10);
+  ctx.fillRect(-s * 0.12, -s * 0.78, s * 0.24, s * 0.10); // muzzle
+  ctx.restore();
+  /* Kaki penopang */
+  ctx.fillRect(-s * 0.58, -s * 0.14, s * 0.12, s * 0.14);
+  ctx.fillRect( s * 0.42, -s * 0.14, s * 0.12, s * 0.14);
+}
+
+/* Reruntuhan bangunan Eropa */
+function drawSilRuin(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Dinding utama dengan atap rusak */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.75, 0);
+  ctx.lineTo(-s * 0.75, -s * 0.65);
+  ctx.lineTo(-s * 0.55, -s * 0.90);
+  ctx.lineTo(-s * 0.20, -s * 0.90);
+  ctx.lineTo(-s * 0.15, -s * 0.55);   // gap atap
+  ctx.lineTo( s * 0.05, -s * 0.80);
+  ctx.lineTo( s * 0.30, -s * 0.80);
+  ctx.lineTo( s * 0.35, -s * 0.40);
+  ctx.lineTo( s * 0.60, -s * 0.95);
+  ctx.lineTo( s * 0.75, -s * 0.65);
+  ctx.lineTo( s * 0.75, 0);
+  ctx.closePath();
+  ctx.fill();
+  /* Cerobong / menara pecah */
+  ctx.fillRect(s * 0.45, -s * 1.15, s * 0.14, s * 0.30);
+  /* Jendela gelap (lubang) */
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillRect(-s * 0.55, -s * 0.60, s * 0.20, s * 0.28);
+  ctx.fillRect(-s * 0.20, -s * 0.55, s * 0.16, s * 0.24);
+  ctx.fillRect( s * 0.10, -s * 0.55, s * 0.18, s * 0.26);
+  ctx.restore();
+  /* Balok kayu miring (bagian runtuh) */
+  ctx.save();
+  ctx.translate(-s * 0.40, -s * 0.20);
+  ctx.rotate(0.35);
+  ctx.fillRect(-s * 0.04, -s * 0.55, s * 0.08, s * 0.55);
+  ctx.restore();
+}
+
+/* Pohon gundul Eropa (dipangkas/dirusak perang) */
+function drawSilTree(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Batang utama */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.10, 0);
+  ctx.lineTo(-s * 0.06, -s * 0.55);
+  ctx.lineTo(-s * 0.09, -s * 1.10);
+  ctx.lineTo( s * 0.09, -s * 1.10);
+  ctx.lineTo( s * 0.06, -s * 0.55);
+  ctx.lineTo( s * 0.10, 0);
+  ctx.closePath();
+  ctx.fill();
+  /* Cabang-cabang */
+  const branches = [
+    [ -0.08, -0.85,  -0.55, -1.35 ],
+    [  0.08, -0.90,   0.55, -1.40 ],
+    [ -0.06, -0.70,  -0.42, -1.05 ],
+    [  0.06, -0.65,   0.42, -1.00 ],
+    [ -0.05, -1.05,  -0.25, -1.55 ],
+    [  0.05, -1.05,   0.28, -1.60 ],
+  ];
+  ctx.lineCap = 'round';
+  for (const [x1, y1, x2, y2] of branches) {
+    ctx.lineWidth = s * 0.055;
+    ctx.beginPath();
+    ctx.moveTo(x1 * s, y1 * s);
+    ctx.lineTo(x2 * s, y2 * s);
+    ctx.strokeStyle = silColor(pal, a);
+    ctx.stroke();
+  }
+  /* Ranting kecil di ujung cabang */
+  ctx.lineWidth = s * 0.025;
+  const twigs = [
+    [-0.55,-1.35, -0.70,-1.55], [-0.55,-1.35, -0.42,-1.55],
+    [ 0.55,-1.40,  0.72,-1.60], [ 0.55,-1.40,  0.40,-1.60],
+    [-0.25,-1.55, -0.35,-1.75], [ 0.28,-1.60,  0.38,-1.80],
+  ];
+  for (const [x1, y1, x2, y2] of twigs) {
+    ctx.beginPath();
+    ctx.moveTo(x1 * s, y1 * s);
+    ctx.lineTo(x2 * s, y2 * s);
+    ctx.stroke();
+  }
+}
+
+/* Tank Mark I (rhomboid ikonik PD I) */
+function drawSilTank(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Bodi rhomboid */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.75, -s * 0.10);
+  ctx.lineTo(-s * 0.65, -s * 0.55);
+  ctx.lineTo(-s * 0.30, -s * 0.75);
+  ctx.lineTo( s * 0.35, -s * 0.75);
+  ctx.lineTo( s * 0.70, -s * 0.50);
+  ctx.lineTo( s * 0.75, -s * 0.10);
+  ctx.lineTo( s * 0.70, -s * 0.15);
+  ctx.lineTo(-s * 0.70, -s * 0.15);
+  ctx.closePath();
+  ctx.fill();
+  /* Track outline (garis roda) */
+  ctx.strokeStyle = silColor(pal, a);
+  ctx.lineWidth = s * 0.09;
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.72, -s * 0.12);
+  ctx.lineTo(-s * 0.62, -s * 0.52);
+  ctx.lineTo(-s * 0.28, -s * 0.70);
+  ctx.lineTo( s * 0.32, -s * 0.70);
+  ctx.lineTo( s * 0.66, -s * 0.48);
+  ctx.lineTo( s * 0.72, -s * 0.12);
+  ctx.stroke();
+  /* Kabin kecil di atas */
+  ctx.fillRect(-s * 0.10, -s * 0.88, s * 0.30, s * 0.15);
+  /* Meriam kecil di depan kabin */
+  ctx.fillRect(s * 0.20, -s * 0.82, s * 0.28, s * 0.05);
+}
+
+/* Balon barrage (pengawas udara) */
+function drawSilBalloon(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Balon utama (elips panjang) */
+  ctx.beginPath();
+  ctx.ellipse(0, -s * 1.10, s * 0.55, s * 0.32, 0, 0, Math.PI * 2);
+  ctx.fill();
+  /* Hidung tumpul */
+  ctx.beginPath();
+  ctx.ellipse(-s * 0.50, -s * 1.10, s * 0.10, s * 0.24, 0, 0, Math.PI * 2);
+  ctx.fill();
+  /* Sirip ekor */
+  ctx.beginPath();
+  ctx.moveTo(s * 0.50, -s * 1.10);
+  ctx.lineTo(s * 0.75, -s * 1.30);
+  ctx.lineTo(s * 0.75, -s * 1.00);
+  ctx.closePath();
+  ctx.fill();
+  /* Gondola kecil di bawah */
+  ctx.fillRect(-s * 0.10, -s * 0.80, s * 0.20, s * 0.08);
+  /* Kabel tambatan */
+  ctx.strokeStyle = silColor(pal, a * 0.7);
+  ctx.lineWidth = Math.max(1, s * 0.015);
+  ctx.beginPath();
+  ctx.moveTo(0, -s * 0.78);
+  ctx.lineTo(0, 0);
+  ctx.stroke();
+}
+
+/* Pesawat biplan PD I (dilihat dari samping) */
+function drawSilBiplane(s, pal, a) {
+  ctx.fillStyle = silColor(pal, a);
+  /* Sayap bawah */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.80, -s * 0.55);
+  ctx.lineTo( s * 0.60, -s * 0.55);
+  ctx.lineTo( s * 0.60, -s * 0.48);
+  ctx.lineTo(-s * 0.80, -s * 0.48);
+  ctx.closePath();
+  ctx.fill();
+  /* Sayap atas */
+  ctx.beginPath();
+  ctx.moveTo(-s * 0.75, -s * 0.88);
+  ctx.lineTo( s * 0.55, -s * 0.88);
+  ctx.lineTo( s * 0.55, -s * 0.80);
+  ctx.lineTo(-s * 0.75, -s * 0.80);
+  ctx.closePath();
+  ctx.fill();
+  /* Fuselage */
+  ctx.beginPath();
+  ctx.ellipse(0, -s * 0.68, s * 0.55, s * 0.13, 0, 0, Math.PI * 2);
+  ctx.fill();
+  /* Ekor */
+  ctx.beginPath();
+  ctx.moveTo(s * 0.50, -s * 0.68);
+  ctx.lineTo(s * 0.80, -s * 0.95);
+  ctx.lineTo(s * 0.80, -s * 0.42);
+  ctx.closePath();
+  ctx.fill();
+  /* Struts (penyangga antara dua sayap) */
+  ctx.fillRect(-s * 0.35, -s * 0.88, s * 0.04, s * 0.40);
+  ctx.fillRect( s * 0.20, -s * 0.88, s * 0.04, s * 0.40);
+  /* Baling-baling */
+  ctx.fillRect(-s * 0.60, -s * 0.75, s * 0.05, s * 0.14);
+  /* Kokpit */
+  ctx.beginPath();
+  ctx.arc(-s * 0.05, -s * 0.80, s * 0.07, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+/* Kolom asap dari tanah */
+function drawSilSmokeColumn(s, pal, a) {
+  /* Beberapa gumpalan asap naik, makin tipis di atas */
+  const puffs = 7;
+  for (let i = 0; i < puffs; i++) {
+    const t = i / (puffs - 1);
+    const cy = -t * s * 1.4;
+    const cx = Math.sin(t * 3.5 + pal[0]) * s * 0.12;
+    const radius = s * (0.35 + t * 0.45);
+    const alpha = a * (0.85 - t * 0.55);
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+    g.addColorStop(0, `rgba(${pal[0]}, ${pal[1]}, ${pal[2]}, ${alpha})`);
+    g.addColorStop(0.6, `rgba(${pal[0] + 10}, ${pal[1] + 8}, ${pal[2] + 8}, ${alpha * 0.4})`);
+    g.addColorStop(1, `rgba(${pal[0]}, ${pal[1]}, ${pal[2]}, 0)`);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/* Dispatcher */
+function drawWarObject(o) {
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  if (o.flip < 0) ctx.scale(-1, 1);
+  if (o.rot) ctx.rotate(o.rot);
+  const a = o.alpha;
+  const pal = o.pal;
+  switch (o.type) {
+    case 'soldier':     drawSilSoldier(o.size, pal, a); break;
+    case 'squad':       drawSilSquad(o.size, pal, a); break;
+    case 'artillery':   drawSilArtillery(o.size, pal, a); break;
+    case 'ruin':        drawSilRuin(o.size, pal, a); break;
+    case 'tree':        drawSilTree(o.size, pal, a); break;
+    case 'tank':        drawSilTank(o.size, pal, a); break;
+    case 'balloon':     drawSilBalloon(o.size, pal, a); break;
+    case 'biplane':     drawSilBiplane(o.size, pal, a); break;
+    case 'smokeColumn': drawSilSmokeColumn(o.size, pal, a); break;
+  }
+  ctx.restore();
+}
+
+function drawWarObjects() {
+  /* Urut berdasarkan layer: jauh dulu, dekat terakhir */
+  const sorted = spaceObjects.slice().sort((a, b) => a.layer - b.layer);
+  for (const o of sorted) drawWarObject(o);
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+
+function drawBackground() {
+  /* ═══ Langit senja Perang Dunia I ═══ */
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.00, '#0a0510');
+  g.addColorStop(0.35, '#1a0a12');
+  g.addColorStop(0.62, '#2a1008');
+  g.addColorStop(0.85, '#160705');
+  g.addColorStop(1.00, '#050205');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  /* ═══ Pendar horizon (kebakaran jauh) ═══ */
+  const horizonY = H * 0.72;
+  const hg = ctx.createRadialGradient(W / 2, horizonY, 40, W / 2, horizonY, W * 0.85);
+  hg.addColorStop(0, 'rgba(190, 70, 25, 0.20)');
+  hg.addColorStop(0.45, 'rgba(120, 40, 15, 0.09)');
+  hg.addColorStop(1, 'transparent');
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, 0, W, H);
+
+  /* ═══ Awan asap atmosferik ═══ */
+  ctx.save();
+  for (const n of nebulaClouds) {
+    const rg = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+    rg.addColorStop(0, `hsla(${n.hue}, 45%, 14%, ${n.a * 1.6})`);
+    rg.addColorStop(0.55, `hsla(${n.hue - 6}, 35%, 9%, ${n.a * 0.7})`);
+    rg.addColorStop(1, 'transparent');
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+
+  /* ═══ Siluet perang ═══ */
+  drawWarObjects();
+
+  /* ═══ Bara api & abu ═══ */
+  for (const s of stars) {
+    const tw = 0.85 + Math.sin(s.twinkle) * 0.15;
+    ctx.globalAlpha = s.a * tw;
+    if (s.isEmber) {
+      /* Bara jingga dengan glow */
+      const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.s * 3.5);
+      glow.addColorStop(0, `hsla(${s.hue}, 95%, 68%, 0.95)`);
+      glow.addColorStop(0.35, `hsla(${s.hue}, 92%, 52%, 0.45)`);
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.s * 3.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `hsl(${s.hue}, 95%, 75%)`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.s * 0.95, 0, Math.PI * 2); ctx.fill();
+    } else {
+      /* Abu lembut */
+      ctx.fillStyle = 'rgba(95, 82, 74, 0.65)';
+      ctx.fillRect(s.x, s.y, s.s * 0.9, s.s * 1.2);
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  /* ═══ Kilatan artileri jauh (opsional) ═══ */
+  for (const f of distantFlashes) {
+    const a = Math.max(0, f.life / f.maxLife);
+    const rg = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+    rg.addColorStop(0, `rgba(255, 200, 120, ${a * 0.7})`);
+    rg.addColorStop(0.4, `rgba(255, 140, 60, ${a * 0.35})`);
+    rg.addColorStop(1, 'transparent');
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* ═══ Garis horizon/parit (menggantikan grid sci-fi) ═══ */
+  ctx.save();
+  const tGrad = ctx.createLinearGradient(0, horizonY, 0, H);
+  tGrad.addColorStop(0, 'rgba(80, 35, 20, 0)');
+  tGrad.addColorStop(1, 'rgba(100, 45, 20, 0.14)');
+  ctx.strokeStyle = tGrad;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 10; i++) {
+    const y = horizonY + i * 30;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  /* Garis vertikal perspektif (mengarah ke titik hilang) */
+  const vGrad = ctx.createLinearGradient(0, horizonY, 0, H);
+  vGrad.addColorStop(0, 'rgba(120, 60, 30, 0)');
+  vGrad.addColorStop(1, 'rgba(120, 60, 30, 0.10)');
+  ctx.strokeStyle = vGrad;
+  for (let i = -10; i <= 10; i++) {
+    ctx.beginPath();
+    ctx.moveTo(W / 2 + i * 40, horizonY);
+    ctx.lineTo(W / 2 + i * 280, H);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Lanjutan game (tidak diubah dari versi sebelumnya)
+   ═══════════════════════════════════════════════════════════════ */
+
+function explosion(x, y, color, count=30, power=280, sizeMul=1) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, sp = Math.random() * power + 40;
+    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.5 + Math.random()*0.9, max: 1.2, size: (Math.random()*3.5+1.2)*sizeMul, color, glow: Math.random() > 0.5 });
+  }
+  for (let i = 0; i < count*0.6; i++) {
+    const a = Math.random() * Math.PI * 2, sp = Math.random() * power * 1.6 + 80;
+    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.3+Math.random()*0.5, max: 0.8, size: Math.random()*2+1, color: C.white, glow: true });
+  }
+}
+function shockwave(x, y, color, maxR=90, life=0.5) { shockwaves.push({ x, y, r: 6, maxR, life, maxLife: life, color }); }
+function debrisBurst(x, y, color, count=8) {
+  for (let i = 0; i < count; i++) {
+    debris.push({ x, y, vx: (Math.random()-0.5)*280, vy: (Math.random()-0.5)*280-60, rot: Math.random()*Math.PI*2, rotV: (Math.random()-0.5)*12, life: 1.5+Math.random()*1, max: 2.5, size: 4+Math.random()*8, color, points: Math.floor(Math.random()*3)+3 });
+  }
+}
+function popup(x, y, text, color, size=22) { popups.push({ x, y, text, color, size, life: 1.2, maxLife: 1.2, vy: -70 }); }
+function toast(text, color) { state.toastText = text; state.toastColor = color; state.toastTimer = 1.6; }
+function spawnEngineTrail(x, y, color) { engineTrails.push({ x, y, vx: (Math.random()-0.5)*30, vy: 100 + Math.random()*80, life: 0.6, max: 0.6, size: 4 + Math.random()*4, color }); }
+function spawnSmokePuff(x, y, sizeMul=1) {
+  smokePuffs.push({
+    x, y,
+    vx: (Math.random()-0.5) * 40, vy: -20 - Math.random() * 40,
+    size: (8 + Math.random() * 12) * sizeMul,
+    life: 1.5 + Math.random() * 1.5, max: 3,
+    rot: Math.random() * Math.PI * 2, rotV: (Math.random()-0.5) * 0.8,
+    alpha: 0.5 + Math.random() * 0.3,
+  });
+}
+function spawnHeatDistortion(x, y, r) { heatDistortions.push({ x, y, r, life: 0.4, max: 0.4 }); }
 
 /* ═══ RESET / ROUND ═══ */
 function resetGame() {
@@ -614,38 +1010,6 @@ function newRound() {
   state.questionFailed = false;
 }
 
-/* ═══ EFFECTS ═══ */
-function explosion(x, y, color, count=30, power=280, sizeMul=1) {
-  for (let i = 0; i < count; i++) {
-    const a = Math.random() * Math.PI * 2, sp = Math.random() * power + 40;
-    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.5 + Math.random()*0.9, max: 1.2, size: (Math.random()*3.5+1.2)*sizeMul, color, glow: Math.random() > 0.5 });
-  }
-  for (let i = 0; i < count*0.6; i++) {
-    const a = Math.random() * Math.PI * 2, sp = Math.random() * power * 1.6 + 80;
-    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.3+Math.random()*0.5, max: 0.8, size: Math.random()*2+1, color: C.white, glow: true });
-  }
-}
-function shockwave(x, y, color, maxR=90, life=0.5) { shockwaves.push({ x, y, r: 6, maxR, life, maxLife: life, color }); }
-function debrisBurst(x, y, color, count=8) {
-  for (let i = 0; i < count; i++) {
-    debris.push({ x, y, vx: (Math.random()-0.5)*280, vy: (Math.random()-0.5)*280-60, rot: Math.random()*Math.PI*2, rotV: (Math.random()-0.5)*12, life: 1.5+Math.random()*1, max: 2.5, size: 4+Math.random()*8, color, points: Math.floor(Math.random()*3)+3 });
-  }
-}
-function popup(x, y, text, color, size=22) { popups.push({ x, y, text, color, size, life: 1.2, maxLife: 1.2, vy: -70 }); }
-function toast(text, color) { state.toastText = text; state.toastColor = color; state.toastTimer = 1.6; }
-function spawnEngineTrail(x, y, color) { engineTrails.push({ x, y, vx: (Math.random()-0.5)*30, vy: 100 + Math.random()*80, life: 0.6, max: 0.6, size: 4 + Math.random()*4, color }); }
-function spawnSmokePuff(x, y, sizeMul=1) {
-  smokePuffs.push({
-    x, y,
-    vx: (Math.random()-0.5) * 40, vy: -20 - Math.random() * 40,
-    size: (8 + Math.random() * 12) * sizeMul,
-    life: 1.5 + Math.random() * 1.5, max: 3,
-    rot: Math.random() * Math.PI * 2, rotV: (Math.random()-0.5) * 0.8,
-    alpha: 0.5 + Math.random() * 0.3,
-  });
-}
-function spawnHeatDistortion(x, y, r) { heatDistortions.push({ x, y, r, life: 0.4, max: 0.4 }); }
-
 /* ═══ HANCURKAN PESAWAT MUSUH ═══ */
 function destroyEnemyPlane(e) {
   const accentColors = [C.cyan, C.magenta, C.lime, C.amber];
@@ -655,7 +1019,6 @@ function destroyEnemyPlane(e) {
     '#ff7060', '#a83028', '#501015', '#ffb040',
     '#e8e8e8', '#9098a4', accent, '#ff4422',
   ];
-  /* ═══ Ledakan diperlambat: power diturunkan ~50%, durasi shockwave diperpanjang ═══ */
   explosion(e.x, e.y, '#ffdd77', 32, 130, 1.9);
   explosion(e.x, e.y, C.amber, 42, 230, 1.7);
   explosion(e.x, e.y, C.pink, 38, 270, 1.5);
@@ -667,7 +1030,6 @@ function destroyEnemyPlane(e) {
   shockwave(e.x, e.y, C.pink, 620, 1.8);
   for (let i = 0; i < 46; i++) {
     const ang = Math.random() * Math.PI * 2;
-    /* ═══ Kecepatan pecahan diperlambat: dari 130–750 → 70–370 ═══ */
     const sp = 70 + Math.random() * 300;
     planeFragments.push({
       x: e.x + (Math.random() - 0.5) * 70,
@@ -748,7 +1110,6 @@ function resolveHit(bullet, enemy) {
     explosion(qShip.x, qShip.y, C.lime, 40, 360, 1.3);
     shockwave(qShip.x, qShip.y, C.lime, 260, 0.8);
 
-    /* ═══ Pesawat jawaban salah kabur dengan kecepatan diperlambat ~50% ═══ */
     enemies.forEach(o => {
       if (o !== enemy && o.alive && o.dying <= 0 && !o.launching && !o.fleeing) {
         o.fleeing = true;
@@ -954,27 +1315,45 @@ function timeUp() {
 /* ═══ UPDATE ═══ */
 function update(dt) {
   state.gameTime += dt;
-  const starMult = state.mode === 'playing' ? 1 : 0.35;
+  const starMult = state.mode === 'playing' ? 1 : 0.45;
+
+  /* Bara & abu */
   for (const s of stars) {
     s.y += s.v * dt * starMult;
+    s.x += s.drift * dt * starMult;
     s.twinkle += dt * 3;
     if (s.y > H + 4) { s.y = -4; s.x = Math.random() * W; }
+    if (s.x < -8) s.x = W + 8;
+    if (s.x > W + 8) s.x = -8;
   }
+  /* Awan asap */
   for (const n of nebulaClouds) {
-    n.y += n.v * dt * 0.3;
-    n.hue = (n.hue + dt * 4) % 360;
+    n.y += n.v * dt * 0.35;
+    n.hue = (n.hue + dt * 3) % 360;
     if (n.y - n.r > H) { n.y = -n.r; n.x = Math.random() * W; }
   }
+  /* Siluet perang */
   for (let i = 0; i < spaceObjects.length; i++) {
     const o = spaceObjects[i];
     o.y += o.v * dt * starMult;
     o.rot += o.rotV * dt;
-    if (o.y - o.size * 2 > H) spaceObjects[i] = makeSpaceObject(true);
+    if (o.y - o.size * 2 > H + 80) spaceObjects[i] = makeWarObject(true);
+  }
+  /* Kilatan artileri jauh sesekali */
+  if (state.mode === 'playing' && Math.random() < dt * 0.35) {
+    distantFlashes.push({
+      x: Math.random() * W,
+      y: horizonYAt() + (Math.random() - 0.5) * 30,
+      r: 80 + Math.random() * 120,
+      life: 0.35, maxLife: 0.35,
+    });
+  }
+  for (let i = distantFlashes.length - 1; i >= 0; i--) {
+    distantFlashes[i].life -= dt;
+    if (distantFlashes[i].life <= 0) distantFlashes.splice(i, 1);
   }
 
-  /* ═══ AUTO-MOVE PESAWAT PEMAIN ═══
-     ▲ DIPERLAMBAT: 0.9 → 0.35 rad/s (≈ 2.6× lebih tenang)
-     Satu siklus penuh = 2π / 0.35 ≈ 18 detik */
+  /* Auto-move pesawat pemain */
   player.autoT += dt;
   const patrolRange = W * 0.40;
   const patrolSpeed = 0.35;
@@ -1085,7 +1464,6 @@ function update(dt) {
     e.bank = lerp(e.bank, e.bankTarget, Math.min(1, dt * 4));
 
     if (e.fleeing) {
-      /* ═══ Gravitasi & akselerasi kabur diperlambat ~55% ═══ */
       e.fleeVy -= 180 * dt;
       e.fleeVx *= 1.006;
       e.x += e.fleeVx * dt; e.y += e.fleeVy * dt;
@@ -1152,6 +1530,8 @@ function update(dt) {
   }
 }
 
+function horizonYAt() { return H * 0.72; }
+
 function updateQShip(dt) {
   qShip.reactorPulse += dt * 4;
   qShip.ringAngle += dt * 0.5;
@@ -1191,51 +1571,7 @@ function updateQShip(dt) {
   }
 }
 
-/* ═══ BACKGROUND RENDER ═══ */
-function drawBackground() {
-  const g = ctx.createRadialGradient(W/2, H*0.3, 80, W/2, H*0.5, H*1.2);
-  g.addColorStop(0, '#0f0728'); g.addColorStop(0.35, '#07031a');
-  g.addColorStop(0.7, '#03010d'); g.addColorStop(1, '#010003');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (const n of nebulaClouds) {
-    const rg = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
-    rg.addColorStop(0, `hsla(${n.hue}, 90%, 55%, ${n.a * 1.3})`);
-    rg.addColorStop(0.5, `hsla(${(n.hue + 60) % 360}, 80%, 45%, ${n.a * 0.6})`);
-    rg.addColorStop(1, 'transparent');
-    ctx.fillStyle = rg;
-    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-
-  drawSpaceObjects();
-
-  for (const s of stars) {
-    const tw = 0.85 + Math.sin(s.twinkle) * 0.15;
-    ctx.globalAlpha = s.a * tw;
-    if (s.layer === 2) { ctx.fillStyle = C.white; }
-    else if (s.layer === 1) { ctx.fillStyle = '#c8d8f0'; }
-    else { ctx.fillStyle = '#5a4d85'; }
-    ctx.fillRect(s.x, s.y, s.s, s.s * 1.5);
-  }
-  ctx.globalAlpha = 1;
-
-  ctx.save();
-  const gridGrad = ctx.createLinearGradient(0, 380, 0, H);
-  gridGrad.addColorStop(0, hex2rgba(C.cyan, 0));
-  gridGrad.addColorStop(1, hex2rgba(C.cyan, 0.10));
-  ctx.strokeStyle = gridGrad; ctx.lineWidth = 1;
-  for (let i = 0; i < 12; i++) { const y = 380 + i * 32; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  const vGrad = ctx.createLinearGradient(0, 380, 0, H);
-  vGrad.addColorStop(0, hex2rgba(C.magenta, 0));
-  vGrad.addColorStop(1, hex2rgba(C.magenta, 0.08));
-  ctx.strokeStyle = vGrad;
-  for (let i = -10; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(W/2 + i*40, 380); ctx.lineTo(W/2 + i*260, H); ctx.stroke(); }
-  ctx.restore();
-}
-
+/* ═══ RENDER EFEK (tidak diubah) ═══ */
 function drawEngineTrails() {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
@@ -1284,7 +1620,7 @@ function drawHeatDistortions() {
   ctx.restore();
 }
 
-/* ═══ PESAWAT INDUK MUSUH ═══ */
+/* ═══ PESAWAT INDUK MUSUH (Q-Ship) ═══ */
 function drawQShip() {
   if (qShip.state === 'idle') return;
   if (qShip.state === 'exploding' && qShip.explodeT > 3.5) return;
@@ -1636,9 +1972,7 @@ function drawQuestionPanel() {
   ctx.restore();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   F-16 FIGHTING FALCON — VERSI TAJAM
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ F-16 MUSUH ═══ */
 function drawEnemyShip(e) {
   if (!e.alive && e.dying <= 0 && !e.launching && !e.fleeing) return;
   const sc = e.dying > 0 ? e.scale : 1;
@@ -1648,7 +1982,6 @@ function drawEnemyShip(e) {
   const accentColors = ['#00d0ff', '#ff20b0', '#00e080', '#ffa020'];
   const accent = accentColors[e.type] || '#00d0ff';
 
-  /* Skema warna hull: kontras tinggi, tajam */
   const schemes = [
     { hi:'#f0f4f8', mid:'#a8b4c0', lo:'#556270', dark:'#1e2a3a', outline:'#080a15' },
     { hi:'#f4eaf0', mid:'#bca8b4', lo:'#6a5560', dark:'#281e28', outline:'#0a0510' },
@@ -1675,7 +2008,6 @@ function drawEnemyShip(e) {
   const isFleeing = e.fleeing;
   const boost = isLaunch ? 2.2 : (isFleeing ? 1.8 : 1.0);
 
-  /* ═══ EXHAUST FLAME ═══ */
   const flameLen = (42 + Math.sin(e.engine * 1.4) * 10) * flick * boost;
   const fg = ctx.createLinearGradient(0, -60, 0, -60 - flameLen);
   if (isHit) {
@@ -1705,7 +2037,6 @@ function drawEnemyShip(e) {
     ctx.fill();
   }
 
-  /* ═══ NOZZLE (dengan outline tebal) ═══ */
   ctx.beginPath();
   ctx.ellipse(0, -58, 10, 4.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#08080f';
@@ -1716,7 +2047,6 @@ function drawEnemyShip(e) {
   ctx.fillStyle = isHit ? '#ff8060' : '#ffd090';
   ctx.fill();
 
-  /* ═══ HORIZONTAL STABILIZERS (belakang) ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 8, -28);
@@ -1734,14 +2064,12 @@ function drawEnemyShip(e) {
     stabG.addColorStop(1, hullLight);
     ctx.fillStyle = stabG; ctx.fill();
     ctx.strokeStyle = outline; ctx.lineWidth = 1.6; ctx.stroke();
-    /* Garis panel tebal */
     ctx.strokeStyle = outline; ctx.lineWidth = 0.7;
     ctx.beginPath();
     ctx.moveTo(side * 14, -34); ctx.lineTo(side * 42, -48);
     ctx.stroke();
   }
 
-  /* ═══ VERTICAL TAIL FIN (ekor tegak) ═══ */
   ctx.beginPath();
   ctx.moveTo(-3, -26);
   ctx.lineTo(-2.5, -44);
@@ -1767,7 +2095,6 @@ function drawEnemyShip(e) {
     ctx.fillRect(-2, -42, 4, 1.5);
   }
 
-  /* ═══ VENTRAL FINS (bawah pesawat) ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 3, -22);
@@ -1779,7 +2106,6 @@ function drawEnemyShip(e) {
     ctx.strokeStyle = outline; ctx.lineWidth = 1.2; ctx.stroke();
   }
 
-  /* ═══ MAIN WINGS ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 7, 18);
@@ -1809,7 +2135,6 @@ function drawEnemyShip(e) {
     ctx.fillStyle = wingG; ctx.fill();
     ctx.strokeStyle = outline; ctx.lineWidth = 1.8; ctx.stroke();
 
-    /* Panel lines tebal */
     ctx.strokeStyle = outline; ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(side * 20, -2); ctx.lineTo(side * 80, -20);
@@ -1817,7 +2142,6 @@ function drawEnemyShip(e) {
     ctx.moveTo(side * 32, -2); ctx.lineTo(side * 76, -24);
     ctx.stroke();
 
-    /* Wing leading edge highlight */
     ctx.strokeStyle = isHit ? '#ffd0c0' : '#ffffff';
     ctx.lineWidth = 1.1;
     ctx.beginPath();
@@ -1827,7 +2151,6 @@ function drawEnemyShip(e) {
     ctx.lineTo(side * 82, -28);
     ctx.stroke();
 
-    /* Roundel */
     if (!isHit) {
       const ix = side * 58, iy = -14;
       ctx.beginPath(); ctx.arc(ix, iy, 4.2, 0, Math.PI * 2);
@@ -1835,7 +2158,6 @@ function drawEnemyShip(e) {
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 0.9; ctx.stroke();
-      /* Bintang putih */
       ctx.beginPath();
       for (let k = 0; k < 5; k++) {
         const ang = -Math.PI / 2 + k * (Math.PI * 2 / 5);
@@ -1851,7 +2173,6 @@ function drawEnemyShip(e) {
     }
   }
 
-  /* ═══ LERX (leading edge extension) ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 6, 34);
@@ -1869,16 +2190,13 @@ function drawEnemyShip(e) {
     ctx.strokeStyle = outline; ctx.lineWidth = 1.2; ctx.stroke();
   }
 
-  /* ═══ WINGTIP MISSILES ═══ */
   for (const side of [-1, 1]) {
-    /* Rail */
     ctx.fillStyle = hullDeep;
     ctx.fillRect(side * 82 - 2, -22, 4, 6);
     ctx.strokeStyle = outline;
     ctx.lineWidth = 1;
     ctx.strokeRect(side * 82 - 2, -22, 4, 6);
 
-    /* Missile body */
     ctx.beginPath();
     ctx.ellipse(side * 82, -20, 2.6, 11, 0, 0, Math.PI * 2);
     const mg = ctx.createLinearGradient(side * 79, 0, side * 85, 0);
@@ -1889,7 +2207,6 @@ function drawEnemyShip(e) {
     ctx.fillStyle = mg; ctx.fill();
     ctx.strokeStyle = outline; ctx.lineWidth = 1; ctx.stroke();
 
-    /* Seeker head */
     ctx.beginPath();
     ctx.ellipse(side * 82, -29, 1.8, 2.8, 0, 0, Math.PI * 2);
     ctx.fillStyle = isHit ? '#ff4040' : '#201820';
@@ -1897,7 +2214,6 @@ function drawEnemyShip(e) {
     ctx.strokeStyle = isHit ? '#ff2020' : accent;
     ctx.lineWidth = 1; ctx.stroke();
 
-    /* Fins */
     for (let f = 0; f < 4; f++) {
       const fa = (f / 4) * Math.PI * 2 + Math.PI / 4;
       const fx = side * 82 + Math.cos(fa) * 1.8;
@@ -1910,7 +2226,6 @@ function drawEnemyShip(e) {
     }
   }
 
-  /* ═══ WING PYLONS + AIM-9 (bawah sayap) ═══ */
   for (const side of [-1, 1]) {
     const px = side * 42;
     ctx.fillStyle = hullDeep;
@@ -1923,7 +2238,6 @@ function drawEnemyShip(e) {
     ctx.fill();
     ctx.strokeStyle = outline; ctx.lineWidth = 1; ctx.stroke();
 
-    /* Missile */
     ctx.beginPath();
     ctx.ellipse(px, 9, 2.4, 9, 0, 0, Math.PI * 2);
     const ag = ctx.createLinearGradient(px - 2.4, 0, px + 2.4, 0);
@@ -1949,7 +2263,6 @@ function drawEnemyShip(e) {
     }
   }
 
-  /* ═══ FUSELAGE (badan utama) ═══ */
   ctx.beginPath();
   ctx.moveTo(0, 78);
   ctx.bezierCurveTo(-3, 72, -5, 62, -6, 52);
@@ -1982,14 +2295,12 @@ function drawEnemyShip(e) {
   ctx.fill();
   ctx.strokeStyle = outline; ctx.lineWidth = 1.8; ctx.stroke();
 
-  /* Centerline highlight */
   ctx.strokeStyle = 'rgba(255,255,255,0.75)';
   ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(0, 74); ctx.lineTo(0, -58);
   ctx.stroke();
 
-  /* Panel lines tebal */
   ctx.strokeStyle = outline; ctx.lineWidth = 0.7;
   const panelYs = [58, 46, 34, 22, 10, -2, -14, -26, -38, -50];
   for (const py of panelYs) {
@@ -2003,7 +2314,6 @@ function drawEnemyShip(e) {
   ctx.moveTo(6.5, 60);  ctx.lineTo(8.5, -50);
   ctx.stroke();
 
-  /* Panel kecil gelap */
   if (!isHit) {
     ctx.fillStyle = 'rgba(30,40,55,0.65)';
     ctx.fillRect(-5.5, 14, 11, 5);
@@ -2016,8 +2326,6 @@ function drawEnemyShip(e) {
     ctx.strokeRect(-3.5, -36, 7, 3);
   }
 
-  /* ═══ CANOPY (kokpit) ═══ */
-  /* Basis kokpit */
   ctx.beginPath();
   ctx.moveTo(-8, 48);
   ctx.quadraticCurveTo(-9.5, 40, -8.5, 32);
@@ -2030,7 +2338,6 @@ function drawEnemyShip(e) {
   ctx.fill();
   ctx.strokeStyle = outline; ctx.lineWidth = 1.4; ctx.stroke();
 
-  /* Kaca kokpit */
   ctx.beginPath();
   ctx.moveTo(-6.5, 46);
   ctx.quadraticCurveTo(-8, 40, -7, 32);
@@ -2054,7 +2361,6 @@ function drawEnemyShip(e) {
   ctx.fillStyle = cg2; ctx.fill();
   ctx.strokeStyle = outline; ctx.lineWidth = 1.2; ctx.stroke();
 
-  /* Frame kokpit */
   ctx.strokeStyle = outline;
   ctx.lineWidth = 1.2;
   ctx.beginPath();
@@ -2062,14 +2368,12 @@ function drawEnemyShip(e) {
   ctx.moveTo(-6.5, 34); ctx.lineTo(6.5, 34);
   ctx.stroke();
 
-  /* Refleksi */
   ctx.strokeStyle = 'rgba(255,255,255,0.85)';
   ctx.lineWidth = 1.4;
   ctx.beginPath();
   ctx.moveTo(-4.5, 44); ctx.quadraticCurveTo(-3.5, 32, 0, 20);
   ctx.stroke();
 
-  /* ═══ INTAKE (di bawah kokpit) ═══ */
   ctx.beginPath();
   ctx.ellipse(0, 56, 8.5, 6, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#05050a'; ctx.fill();
@@ -2078,7 +2382,6 @@ function drawEnemyShip(e) {
   ctx.ellipse(0, 56, 6.5, 4.5, 0, 0, Math.PI * 2);
   ctx.fillStyle = '#000'; ctx.fill();
 
-  /* ═══ NOSE (hidung pesawat) ═══ */
   ctx.beginPath();
   ctx.moveTo(0, 78);
   ctx.bezierCurveTo(-3, 72, -5, 62, -6, 52);
@@ -2099,12 +2402,10 @@ function drawEnemyShip(e) {
   ctx.fillStyle = noseG; ctx.fill();
   ctx.strokeStyle = outline; ctx.lineWidth = 1.4; ctx.stroke();
 
-  /* Pitot tube */
   ctx.strokeStyle = isHit ? '#ffd0c0' : '#c0c8d0';
   ctx.lineWidth = 1.6;
   ctx.beginPath(); ctx.moveTo(0, 78); ctx.lineTo(0, 90); ctx.stroke();
 
-  /* ═══ NAV LIGHTS ═══ */
   const navBlink = 0.55 + Math.sin(e.engine * 1.5) * 0.45;
   ctx.globalAlpha = sc * navBlink;
   ctx.beginPath(); ctx.arc(-86, -24, 2.2, 0, Math.PI * 2);
@@ -2115,7 +2416,6 @@ function drawEnemyShip(e) {
   ctx.fillStyle = '#ffffff'; ctx.fill();
   ctx.globalAlpha = sc;
 
-  /* ═══ BOSS HP BAR ═══ */
   if (state.bossMode && e.hp > 1 && e.alive) {
     const hpW = 52;
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
@@ -2129,7 +2429,6 @@ function drawEnemyShip(e) {
 
   ctx.restore();
 
-  /* Nomor jawaban */
   const idx = enemies.indexOf(e);
   if (idx >= 0) {
     const br = 15 * Math.min(uiScale, 1.55);
@@ -2169,7 +2468,6 @@ function drawEnemyPanel(e) {
   const panelColor = isHit ? C.pink : (state.bossMode ? C.amber : accent);
 
   ctx.save();
-  /* Garis penghubung */
   ctx.strokeStyle = hex2rgba(accent, 0.6);
   ctx.lineWidth = 1.6;
   ctx.setLineDash([4, 6]);
@@ -2184,7 +2482,6 @@ function drawEnemyPanel(e) {
   ctx.fillStyle = accent;
   ctx.fill();
 
-  /* Panel background */
   roundRect(ctx, x, y, w, h, 10);
   const g = ctx.createLinearGradient(x, y, x, y + h);
   if (isHit) {
@@ -2202,7 +2499,6 @@ function drawEnemyPanel(e) {
   ctx.strokeStyle = panelColor;
   ctx.lineWidth = 2.2; ctx.stroke();
 
-  /* Corner brackets */
   ctx.strokeStyle = isHit ? C.pink : accent;
   ctx.lineWidth = 3;
   const cLen = 12;
@@ -2213,14 +2509,12 @@ function drawEnemyPanel(e) {
   ctx.moveTo(x + w - cLen, y + h - 4); ctx.lineTo(x + w - 4, y + h - 4); ctx.lineTo(x + w - 4, y + h - cLen);
   ctx.stroke();
 
-  /* Nomor */
   const fBadge = Math.round(12 * Math.min(uiScale, 1.45));
   ctx.font = `bold ${fBadge}px "Consolas", monospace`;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   ctx.fillStyle = accent;
   ctx.fillText(`[${enemies.indexOf(e) + 1}]`, x + 12, y + 6);
 
-  /* Teks jawaban */
   const fOpt = Math.round(17 * uiScale * panelSc);
   const font = `bold ${fOpt}px system-ui, sans-serif`;
   const lines = wrapText(e.text, w - 30, font);
@@ -2231,7 +2525,6 @@ function drawEnemyPanel(e) {
   const startY = cy - ((lines.length - 1) * lh) / 2 + 3;
   lines.forEach((ln, i) => ctx.fillText(ln, cx, startY + i * lh));
 
-  /* Panel flash */
   if (e.panelFlash > 0) {
     ctx.save();
     ctx.globalAlpha = Math.min(1, e.panelFlash);
@@ -2242,7 +2535,6 @@ function drawEnemyPanel(e) {
     ctx.restore();
   }
 
-  /* Highlight jawaban benar */
   if (state.questionFailed && e.correct && e.alive) {
     ctx.save();
     const pulse = 0.6 + Math.sin(state.gameTime * 8) * 0.4;
@@ -2262,9 +2554,7 @@ function drawEnemyPanel(e) {
   ctx.restore();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   PESAWAT PEMAIN — VERSI TAJAM DENGAN OUTLINE TEBAL
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ PESAWAT PEMAIN ═══ */
 function drawPlayer() {
   if (state.mode === 'over' || state.mode === 'victory') return;
   const bob = Math.sin(state.gameTime * 2.4) * 2.5;
@@ -2300,7 +2590,6 @@ function drawPlayer() {
     ctx.restore();
   }
 
-  /* ═══ EXHAUST FLAMES ═══ */
   const flameLen = 42 + Math.sin(player.enginePulse) * 10;
   const engineGrad = ctx.createLinearGradient(0, 18, 0, 18 + flameLen);
   engineGrad.addColorStop(0, hex2rgba(C.white, 1));
@@ -2323,7 +2612,6 @@ function drawPlayer() {
     ctx.closePath(); ctx.fill();
   }
 
-  /* Core flame */
   const coreLen = flameLen * 1.4;
   const coreGrad = ctx.createLinearGradient(0, 16, 0, 16 + coreLen);
   coreGrad.addColorStop(0, C.white);
@@ -2338,9 +2626,7 @@ function drawPlayer() {
   const wingSpan = 48 + (tier - 1) * 15;
   const wingSweep = 0.55 + tier * 0.02;
 
-  /* ═══ WINGS (dengan outline tebal dulu) ═══ */
   for (const side of [-1, 1]) {
-    /* Path wing */
     const wingPath = () => {
       ctx.beginPath();
       ctx.moveTo(side * 7, -10);
@@ -2349,13 +2635,11 @@ function drawPlayer() {
       ctx.bezierCurveTo(side * (wingSpan * 0.65), 42, side * 26, 25, side * 8, 14);
       ctx.closePath();
     };
-    /* 1. Outer bold outline */
     wingPath();
     ctx.strokeStyle = 'rgba(0,8,20,0.98)';
     ctx.lineWidth = 6;
     ctx.lineJoin = 'round';
     ctx.stroke();
-    /* 2. Fill gradient */
     wingPath();
     const wingGrad = ctx.createLinearGradient(side * wingSpan, 0, 0, 18);
     wingGrad.addColorStop(0, '#08122a');
@@ -2363,13 +2647,11 @@ function drawPlayer() {
     wingGrad.addColorStop(0.85, '#1a4a8a');
     wingGrad.addColorStop(1, '#0d2a5a');
     ctx.fillStyle = wingGrad; ctx.fill();
-    /* 3. Cyan inner stroke */
     wingPath();
     ctx.strokeStyle = hex2rgba(C.cyan, 0.95);
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    /* 4. Wing leading edge — bright highlight */
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
@@ -2377,7 +2659,6 @@ function drawPlayer() {
     ctx.bezierCurveTo(side * 20, -6, side * (wingSpan * 0.7), wingSweep * 22, side * wingSpan, wingSweep * 30);
     ctx.stroke();
 
-    /* 5. Detail lines */
     ctx.strokeStyle = hex2rgba(C.cyan, 0.55);
     ctx.lineWidth = 0.9;
     ctx.beginPath();
@@ -2390,7 +2671,6 @@ function drawPlayer() {
     ctx.stroke();
   }
 
-  /* ═══ CANARDS ═══ */
   for (const side of [-1, 1]) {
     ctx.beginPath();
     ctx.moveTo(side * 5, -28);
@@ -2403,7 +2683,6 @@ function drawPlayer() {
     ctx.fillStyle = '#0d2a5a'; ctx.fill();
     ctx.strokeStyle = hex2rgba(C.cyan, 0.9);
     ctx.lineWidth = 1.6; ctx.stroke();
-    /* Highlight */
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
     ctx.lineWidth = 0.9;
     ctx.beginPath();
@@ -2412,37 +2691,30 @@ function drawPlayer() {
     ctx.stroke();
   }
 
-  /* ═══ CANNON PODS ═══ */
   const cannonPositions = [[-38, 6], [38, 6]];
   if (tier >= 2) cannonPositions.push([-56, 8], [56, 8]);
   if (tier >= 4) cannonPositions.push([-74, 10], [74, 10]);
   if (tier >= 5) cannonPositions.push([-92, 12], [92, 12]);
 
   for (const [cx2, cy2] of cannonPositions) {
-    /* Outline tebal */
     ctx.fillStyle = '#02010a';
     ctx.strokeStyle = 'rgba(0,8,20,0.98)';
     ctx.lineWidth = 3.5;
     ctx.beginPath(); ctx.rect(cx2 - 4, cy2 - 9, 8, 16); ctx.fill(); ctx.stroke();
-    /* Cyan stroke */
     ctx.strokeStyle = hex2rgba(C.cyan, 0.95);
     ctx.lineWidth = 1.4;
     ctx.beginPath(); ctx.rect(cx2 - 4, cy2 - 9, 8, 16); ctx.stroke();
-    /* Green tip light */
     ctx.beginPath(); ctx.arc(cx2, cy2 - 10, 2, 0, Math.PI*2);
     ctx.fillStyle = C.lime; ctx.fill();
   }
 
-  /* ═══ TIER 3+: ENGINE PODS ═══ */
   if (tier >= 3) {
     for (const side of [-1, 1]) {
       const baseX = side * (wingSpan - 18);
-      /* Outline */
       ctx.beginPath();
       ctx.ellipse(baseX, 8, 13, 7, 0, 0, Math.PI*2);
       ctx.strokeStyle = 'rgba(0,8,20,0.98)';
       ctx.lineWidth = 5; ctx.stroke();
-      /* Fill */
       ctx.beginPath();
       ctx.ellipse(baseX, 8, 13, 7, 0, 0, Math.PI*2);
       const podG = ctx.createRadialGradient(baseX - 4, 4, 0, baseX, 8, 15);
@@ -2450,18 +2722,15 @@ function drawPlayer() {
       podG.addColorStop(0.4, '#0d2a5a');
       podG.addColorStop(1, '#02010a');
       ctx.fillStyle = podG; ctx.fill();
-      /* Cyan ring */
       ctx.beginPath();
       ctx.ellipse(baseX, 8, 13, 7, 0, 0, Math.PI*2);
       ctx.strokeStyle = hex2rgba(C.cyan, 0.95);
       ctx.lineWidth = 1.8; ctx.stroke();
-      /* Bright core */
       ctx.beginPath(); ctx.arc(baseX, 8, 3.2, 0, Math.PI*2);
       ctx.fillStyle = C.lime; ctx.fill();
     }
   }
 
-  /* ═══ TIER 3+: TAIL FIN ═══ */
   if (tier >= 3) {
     ctx.beginPath();
     ctx.moveTo(0, -40); ctx.lineTo(-8, -62); ctx.lineTo(0, -54); ctx.lineTo(8, -62);
@@ -2473,7 +2742,6 @@ function drawPlayer() {
     ctx.lineWidth = 1.6; ctx.stroke();
   }
 
-  /* ═══ TIER 4+: PYLONS ═══ */
   if (tier >= 4) {
     for (const side of [-1, 1]) {
       ctx.beginPath();
@@ -2487,7 +2755,6 @@ function drawPlayer() {
     }
   }
 
-  /* ═══ FUSELAGE (body utama) ═══ */
   const hullW = 13 + (tier - 1) * 1.4;
   const hullH = 46 + (tier - 1) * 2;
 
@@ -2504,14 +2771,12 @@ function drawPlayer() {
     ctx.closePath();
   };
 
-  /* 1. BOLD OUTLINE */
   hullPath();
   ctx.strokeStyle = 'rgba(0,8,20,0.98)';
   ctx.lineWidth = 7;
   ctx.lineJoin = 'round';
   ctx.stroke();
 
-  /* 2. Fill gradient */
   hullPath();
   const bodyGrad = ctx.createLinearGradient(0, -hullH, 0, 22);
   bodyGrad.addColorStop(0, '#f0faff');
@@ -2521,18 +2786,15 @@ function drawPlayer() {
   bodyGrad.addColorStop(1, '#02060f');
   ctx.fillStyle = bodyGrad; ctx.fill();
 
-  /* 3. Bright cyan rim */
   hullPath();
   ctx.strokeStyle = hex2rgba(C.cyan, 1);
   ctx.lineWidth = 2.2;
   ctx.stroke();
 
-  /* 4. White centerline */
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, -hullH + 10); ctx.lineTo(0, 20); ctx.stroke();
 
-  /* 5. Panel lines */
   ctx.strokeStyle = hex2rgba(C.cyan, 0.6);
   ctx.lineWidth = 0.8;
   ctx.beginPath();
@@ -2541,7 +2803,6 @@ function drawPlayer() {
   ctx.moveTo(-6, 14); ctx.lineTo(6, 14);
   ctx.stroke();
 
-  /* Tier 4+: greebles */
   if (tier >= 4) {
     ctx.fillStyle = 'rgba(4, 2, 18, 0.95)';
     ctx.strokeStyle = hex2rgba(C.cyan, 0.65); ctx.lineWidth = 1;
@@ -2549,7 +2810,6 @@ function drawPlayer() {
     ctx.beginPath(); ctx.rect(-10, 15, 20, 6); ctx.fill(); ctx.stroke();
   }
 
-  /* Tier 5: core reactor */
   if (tier >= 5) {
     ctx.beginPath(); ctx.arc(0, -6, 6, 0, Math.PI*2);
     const corePulse = 0.8 + Math.sin(state.gameTime * 6) * 0.2;
@@ -2558,24 +2818,20 @@ function drawPlayer() {
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.4; ctx.stroke();
   }
 
-  /* ═══ COCKPIT ═══ */
   ctx.beginPath();
   ctx.moveTo(0, -hullH + 4);
   ctx.quadraticCurveTo(-5, -hullH + 20, -4.5, -hullH + 34);
   ctx.lineTo(4.5, -hullH + 34);
   ctx.quadraticCurveTo(5, -hullH + 20, 0, -hullH + 4);
   ctx.closePath();
-  /* Outline */
   ctx.strokeStyle = 'rgba(0,8,20,0.98)';
   ctx.lineWidth = 3.5; ctx.stroke();
-  /* Fill */
   const cg2 = ctx.createRadialGradient(-1.5, -hullH + 16, 0, 0, -hullH + 20, 14);
   cg2.addColorStop(0, 'rgba(255,255,255,1)');
   cg2.addColorStop(0.35, 'rgba(180,240,255,0.98)');
   cg2.addColorStop(0.7, 'rgba(60, 140, 220, 0.95)');
   cg2.addColorStop(1, 'rgba(10, 30, 70, 0.98)');
   ctx.fillStyle = cg2; ctx.fill();
-  /* Cyan rim */
   ctx.strokeStyle = hex2rgba(C.cyan, 1);
   ctx.lineWidth = 1.6;
   ctx.beginPath();
@@ -2585,7 +2841,6 @@ function drawPlayer() {
   ctx.quadraticCurveTo(5, -hullH + 20, 0, -hullH + 4);
   ctx.closePath();
   ctx.stroke();
-  /* Reflection */
   ctx.strokeStyle = 'rgba(255,255,255,0.95)';
   ctx.lineWidth = 1.2;
   ctx.beginPath();
@@ -2593,7 +2848,6 @@ function drawPlayer() {
   ctx.quadraticCurveTo(-3, -hullH + 18, -2.5, -hullH + 28);
   ctx.stroke();
 
-  /* ═══ NOSE SPIKE ═══ */
   ctx.beginPath();
   ctx.moveTo(0, -hullH); ctx.lineTo(3, -hullH - 10); ctx.lineTo(-3, -hullH - 10);
   ctx.closePath();
@@ -2604,7 +2858,6 @@ function drawPlayer() {
   ctx.strokeStyle = hex2rgba(C.cyan, 1);
   ctx.lineWidth = 1.2; ctx.stroke();
 
-  /* Tier 4+: nose fins */
   if (tier >= 4) {
     for (const side of [-1, 1]) {
       ctx.beginPath();
@@ -2619,7 +2872,6 @@ function drawPlayer() {
     }
   }
 
-  /* ═══ TIER LABEL ═══ */
   if (tier >= 2) {
     ctx.font = `bold ${fs(10, 1.5)}px "Consolas", monospace`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -2632,7 +2884,6 @@ function drawPlayer() {
 
   ctx.restore();
 
-  /* ═══ SHIELD ═══ */
   if (state.shield > 0) {
     const shieldRatio = state.shield / state.maxShield;
     const pulse = 0.5 + Math.sin(player.shieldPhase * 2) * 0.15;
@@ -2911,8 +3162,8 @@ function drawMenu() {
   const mu = Math.min(uiScale, 1.4);
   ctx.save();
   const bgGrad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, H);
-  bgGrad.addColorStop(0, 'rgba(20, 5, 45, 0.94)');
-  bgGrad.addColorStop(1, 'rgba(3, 0, 12, 0.98)');
+  bgGrad.addColorStop(0, 'rgba(45, 15, 25, 0.92)');
+  bgGrad.addColorStop(1, 'rgba(8, 2, 6, 0.96)');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
@@ -2924,7 +3175,7 @@ function drawMenu() {
     const t = (state.gameTime * 0.6 + i) % 1;
     grd.addColorStop(0, 'transparent');
     grd.addColorStop(Math.max(0, t - 0.15), 'transparent');
-    grd.addColorStop(t, i % 2 === 0 ? hex2rgba(C.cyan, 0.7) : hex2rgba(C.magenta, 0.7));
+    grd.addColorStop(t, i % 2 === 0 ? hex2rgba(C.cyan, 0.7) : hex2rgba(C.amber, 0.7));
     grd.addColorStop(Math.min(1, t + 0.15), 'transparent');
     grd.addColorStop(1, 'transparent');
     ctx.fillStyle = grd;
@@ -2940,8 +3191,8 @@ function drawMenu() {
   const titleSize = Math.round(58 * Math.min(mu, 1.15));
   ctx.font = `bold ${titleSize}px system-ui, sans-serif`;
   const tg = ctx.createLinearGradient(W/2 - 400, 0, W/2 + 400, 0);
-  tg.addColorStop(0, C.cyan); tg.addColorStop(0.35, C.white);
-  tg.addColorStop(0.7, C.magenta); tg.addColorStop(1, C.purple);
+  tg.addColorStop(0, C.amber); tg.addColorStop(0.35, C.white);
+  tg.addColorStop(0.7, C.pink); tg.addColorStop(1, C.purple);
   ctx.fillStyle = tg;
   ctx.fillText('PERANG', W/2, 122);
   ctx.fillText('DUNIA I', W/2, 122 + titleSize * 1.08);
@@ -3025,11 +3276,11 @@ function drawMenu() {
   const btnX = (W - btnW) / 2, btnY = 616;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const bg = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-  bg.addColorStop(0, hex2rgba(C.cyan, 0.25));
-  bg.addColorStop(0.5, hex2rgba(C.magenta, 0.35));
-  bg.addColorStop(1, hex2rgba(C.cyan, 0.25));
+  bg.addColorStop(0, hex2rgba(C.amber, 0.25));
+  bg.addColorStop(0.5, hex2rgba(C.pink, 0.35));
+  bg.addColorStop(1, hex2rgba(C.amber, 0.25));
   ctx.fillStyle = bg; ctx.fill();
-  ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8;
+  ctx.strokeStyle = C.amber; ctx.lineWidth = 2.8;
   ctx.stroke();
   ctx.font = `bold ${Math.round(24 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -3102,11 +3353,11 @@ function drawGameOver() {
   const btnX = (W - btnW) / 2, btnY = 570;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const btnG = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-  btnG.addColorStop(0, hex2rgba(C.cyan, 0.25));
-  btnG.addColorStop(0.5, hex2rgba(C.magenta, 0.35));
-  btnG.addColorStop(1, hex2rgba(C.cyan, 0.25));
+  btnG.addColorStop(0, hex2rgba(C.amber, 0.25));
+  btnG.addColorStop(0.5, hex2rgba(C.pink, 0.35));
+  btnG.addColorStop(1, hex2rgba(C.amber, 0.25));
   ctx.fillStyle = btnG; ctx.fill();
-  ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8;
+  ctx.strokeStyle = C.amber; ctx.lineWidth = 2.8;
   ctx.stroke();
   ctx.font = `bold ${Math.round(22 * mu)}px system-ui, sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
