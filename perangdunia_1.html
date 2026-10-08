@@ -25,6 +25,7 @@
     min-height: 0;
     display: flex; align-items: center; justify-content: center;
     position: relative;
+    overflow: hidden;
   }
   canvas {
     display: block;
@@ -41,7 +42,7 @@
   #mobileControls {
     display: none;
     flex: 0 0 auto;
-    height: 100px;
+    height: clamp(78px, 13vh, 100px);
     padding: 6px 14px calc(env(safe-area-inset-bottom, 0px) + 8px) 14px;
     background: linear-gradient(180deg, rgba(6,1,15,0) 0%, rgba(6,1,15,0.7) 30%, rgba(6,1,15,0.95) 100%);
     z-index: 100;
@@ -52,10 +53,12 @@
   }
   .ctrlGroup { display: flex; gap: 14px; align-items: flex-end; }
   .ctrlBtn {
-    width: 62px; height: 62px; border-radius: 50%;
+    width: clamp(50px, 7.2vh, 62px);
+    height: clamp(50px, 7.2vh, 62px);
+    border-radius: 50%;
     background: linear-gradient(135deg, rgba(0, 240, 255, 0.22), rgba(255, 68, 34, 0.22));
     border: 2px solid rgba(0, 240, 255, 0.75);
-    color: #00f0ff; font-size: 26px; font-weight: bold;
+    color: #00f0ff; font-size: clamp(20px, 3vh, 26px); font-weight: bold;
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 0 18px rgba(0, 240, 255, 0.4);
@@ -71,14 +74,16 @@
   .fireBtns {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: clamp(6px, 1vh, 10px);
     align-items: flex-end;
   }
   .fireBtn {
-    width: 62px; height: 62px; border-radius: 14px;
+    width: clamp(50px, 7.2vh, 62px);
+    height: clamp(50px, 7.2vh, 62px);
+    border-radius: 14px;
     background: linear-gradient(135deg, rgba(255, 68, 34, 0.28), rgba(176, 64, 255, 0.28));
     border: 2px solid rgba(255, 68, 34, 0.8);
-    color: #ffcc99; font-size: 24px; font-weight: bold;
+    color: #ffcc99; font-size: clamp(18px, 2.8vh, 24px); font-weight: bold;
     display: flex; align-items: center; justify-content: center;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     box-shadow: 0 0 18px rgba(255, 68, 34, 0.4);
@@ -217,11 +222,16 @@
 
 const cvs = document.getElementById('game');
 const ctx = cvs.getContext('2d');
-const W = 1200, H = 720;
+
+/* ═══ RESOLUSI DINAMIS ═══
+   H tetap sebagai acuan tinggi gameplay.
+   W dihitung dari rasio viewport → canvas selalu memenuhi layar. */
+const BASE_H = 720;
+let W = 1200, H = BASE_H;
 
 /* ═══ KONFIGURASI LEVEL ═══ */
-const MAX_LEVEL = 10;               // Maksimum 10 level
-const MAX_WRONG_PER_ROUND = 2;      // Salah 2× = pertanyaan gagal
+const MAX_LEVEL = 10;
+const MAX_WRONG_PER_ROUND = 2;
 
 const C = {
   cyan:      '#00f0ff',
@@ -243,6 +253,7 @@ let viewScale = 1;
 let uiScale   = 1;
 let baseScale = 1;
 let dpr       = 1;
+let bgReady   = false;
 
 let COL_X = [150, 450, 750, 1050];
 let SHIP_Y_START = 205;
@@ -274,11 +285,12 @@ function hex2rgba(hex, a) {
 }
 function fs(n, cap) { return Math.round(n * Math.min(uiScale, cap || 1.65)); }
 
+/* ═══ LAYOUT ═══ */
 function applyLayout() {
   const u = uiScale;
 
-  /* Panel pertanyaan — sedikit lebih kompak */
-  QP_X = 120 - 10 * (u - 1);
+  /* Panel pertanyaan — proporsional ke W */
+  QP_X = W * 0.10 - 10 * (u - 1);
   QP_W = W - QP_X * 2;
   QP_Y = 60 + 12 * u;
   QP_H = 118 + 32 * (u - 1);
@@ -292,30 +304,52 @@ function applyLayout() {
   if (SHIP_Y_END < SHIP_Y_START + 90) SHIP_Y_END = SHIP_Y_START + 90;
   SHIP_TOTAL_DESCENT = SHIP_Y_END - SHIP_Y_START;
 
-  COL_X = [150, 450, 750, 1050];
-  PANEL_W = 288;
+  /* 4 kolom tersebar proporsional */
+  COL_X = [W * 0.125, W * 0.375, W * 0.625, W * 0.875];
+
+  /* Panel jawaban — jangan lebih lebar dari jarak antar kolom */
+  PANEL_W = Math.min(288, W * 0.22);
 }
 
+/* ═══ RESIZE — Dynamic Internal Resolution ═══ */
 function resize() {
   const locked = updateOrientationOverlay();
   if (locked) return;
 
   const wrap = document.getElementById('gameWrap');
+  if (!wrap) return;
   const rect = wrap.getBoundingClientRect();
   const vw = rect.width;
   const vh = rect.height;
-  const padding = 0.985;
 
+  if (vw < 10 || vh < 10) {
+    setTimeout(resize, 80);
+    return;
+  }
+
+  /* 1) Hitung resolusi internal berdasar rasio viewport (clamp 1.4 – 2.8) */
+  const aspect = clamp(vw / vh, 1.4, 2.8);
+  const newW = Math.round(BASE_H * aspect);
+  if (Math.abs(newW - W) > 20) {
+    W = newW;
+    H = BASE_H;
+    if (bgReady) initBackground();
+  }
+
+  /* 2) Skala tampilan — fill penuh */
+  const padding = 0.998;
   const s = Math.min(vw / W, vh / H) * padding;
   viewScale = s;
 
-  /* Perbesar teks bila kanvas tampil kecil di layar */
-  uiScale = clamp(0.86 / s, 1, 1.65);
+  /* 3) UI scale — teks di dalam canvas menyesuaikan */
+  uiScale = clamp(0.86 / s, 1, 1.75);
 
+  /* 4) DPR adaptif */
   dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const maxW = 3200;
+  const maxW = 3600;
   if (W * s * dpr > maxW) dpr = Math.max(1, maxW / (W * s));
 
+  /* 5) Terapkan ke canvas */
   cvs.style.width  = (W * s) + 'px';
   cvs.style.height = (H * s) + 'px';
   cvs.width  = Math.max(2, Math.round(W * s * dpr));
@@ -326,11 +360,17 @@ function resize() {
 }
 
 window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+window.addEventListener('orientationchange', () => {
+  setTimeout(resize, 200);
+  setTimeout(resize, 500);
+});
 if (window.visualViewport) {
   window.visualViewport.addEventListener('resize', resize);
 }
-window.addEventListener('load', () => setTimeout(resize, 100));
+window.addEventListener('load', () => {
+  setTimeout(resize, 100);
+  setTimeout(resize, 400);
+});
 resize();
 
 /* ═══ AUDIO ═══ */
@@ -566,6 +606,7 @@ function initBackground() {
   for (let i = 0; i < 16; i++) spaceObjects.push(makeSpaceObject(false));
 }
 initBackground();
+bgReady = true;
 
 function drawSpaceObjects() {
   for (const o of spaceObjects) {
@@ -1184,7 +1225,7 @@ function timeUp() {
     toast('💥 SKUADRON F16 MENEROBOS! Perisai jatuh!', C.amber);
   } else {
     state.hp--;
-    toast('💥 SKUADRON F16 MENEROBOS! -1 Energi', C.pink);
+    toast('💥 SKUADRONE F16 MENEROBOS! -1 Energi', C.pink);
   }
   state.streak = 0;
   state.comboMeter = Math.max(0, state.comboMeter - 40);
@@ -1508,7 +1549,7 @@ function drawBackground() {
   vGrad.addColorStop(0, hex2rgba(C.magenta, 0));
   vGrad.addColorStop(1, hex2rgba(C.magenta, 0.12));
   ctx.strokeStyle = vGrad;
-  for (let i = -7; i <= 7; i++) { ctx.beginPath(); ctx.moveTo(W/2 + i*40, 380); ctx.lineTo(W/2 + i*260, H); ctx.stroke(); }
+  for (let i = -10; i <= 10; i++) { ctx.beginPath(); ctx.moveTo(W/2 + i*40, 380); ctx.lineTo(W/2 + i*260, H); ctx.stroke(); }
   ctx.restore();
 }
 
@@ -3327,8 +3368,10 @@ function drawMenu() {
   ctx.fillText('⚡  10 LEVEL  ·  1914–1918  ·  Hancurkan 4 Skuadron F16!  ⚡', W/2, 244);
 
   const panelY = 274, panelH = 316;
-  const lx = 60, lw = 560;
-  const rx = 650, rw = 490;
+  const lx = W * 0.05;
+  const lw = W * 0.46;
+  const rx = W * 0.53;
+  const rw = W * 0.42;
 
   /* Panel kiri */
   roundRect(ctx, lx, panelY, lw, panelH, 18);
@@ -3408,7 +3451,7 @@ function drawMenu() {
   /* Tombol mulai */
   const blink = 0.65 + Math.sin(state.gameTime * 4) * 0.35;
   ctx.globalAlpha = blink;
-  const btnW = 560, btnH = 66;
+  const btnW = Math.min(620, W * 0.52), btnH = 66;
   const btnX = (W - btnW) / 2, btnY = 616;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const bg = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -3458,7 +3501,7 @@ function drawGameOver() {
   ctx.fillStyle = hex2rgba(C.white, 0.72);
   ctx.fillText('Skuadron F16 musuh berhasil menerobos pertahananmu...', W/2, 196);
 
-  const px = 240, py = 230, pw = W - 480, ph = 220 + 60 * mu;
+  const px = W * 0.20, py = 230, pw = W * 0.60, ph = 220 + 60 * mu;
   roundRect(ctx, px, py, pw, ph, 20);
   const bg = ctx.createLinearGradient(px, py, px, py + ph);
   bg.addColorStop(0, 'rgba(20, 5, 45, 0.96)');
@@ -3501,7 +3544,7 @@ function drawGameOver() {
 
   const blink = 0.6 + Math.sin(state.gameTime * 4) * 0.4;
   ctx.globalAlpha = blink;
-  const btnW = 520, btnH = 62;
+  const btnW = Math.min(620, W * 0.50), btnH = 62;
   const btnX = (W - btnW) / 2, btnY = 570;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const btnG = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -3549,7 +3592,7 @@ function drawVictory() {
   ctx.fillStyle = hex2rgba(C.white, 0.85);
   ctx.fillText('🏆  Semua 10 level Perang Dunia I berhasil dituntaskan!  🏆', W/2, 196);
 
-  const px = 240, py = 230, pw = W - 480, ph = 220 + 60 * mu;
+  const px = W * 0.20, py = 230, pw = W * 0.60, ph = 220 + 60 * mu;
   roundRect(ctx, px, py, pw, ph, 20);
   const bg = ctx.createLinearGradient(px, py, px, py + ph);
   bg.addColorStop(0, 'rgba(5, 40, 25, 0.96)');
@@ -3591,7 +3634,7 @@ function drawVictory() {
 
   const blink = 0.6 + Math.sin(state.gameTime * 4) * 0.4;
   ctx.globalAlpha = blink;
-  const btnW = 520, btnH = 62;
+  const btnW = Math.min(620, W * 0.50), btnH = 62;
   const btnX = (W - btnW) / 2, btnY = 570;
   roundRect(ctx, btnX, btnY, btnW, btnH, 14);
   const btnG = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
@@ -3800,6 +3843,11 @@ document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: fals
 document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
 
 state.gameTime = 0;
+
+/* Paksa re-layout setelah semua siap */
+requestAnimationFrame(() => resize());
+setTimeout(resize, 150);
+setTimeout(resize, 500);
 </script>
 </body>
 </html>
