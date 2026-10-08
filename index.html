@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pesawat Tempur IPS</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #07111f;
+      color: white;
+    }
+
+    header {
+      padding: 20px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0b1b30;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-left: 25px;
+    }
+
+    nav a:hover {
+      color: #38bdf8;
+    }
+
+    .hero {
+      min-height: 85vh;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 60px 8%;
+      background: linear-gradient(135deg, #07111f, #12365a);
+    }
+
+    .hero-text {
+      max-width: 550px;
+    }
+
+    .hero-text h1 {
+      font-size: 55px;
+      margin-bottom: 20px;
+    }
+
+    .hero-text h1 span {
+      color: #38bdf8;
+    }
+
+    .hero-text p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #d1d5db;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      background: #0ea5e9;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background: #0284c7;
+      transform: scale(1.05);
+    }
+
+    .plane {
+      font-size: 180px;
+      animation: terbang 3s infinite ease-in-out;
+    }
+
+    @keyframes terbang {
+      0%, 100% {
+        transform: translateY(0) rotate(-5deg);
+      }
+      50% {
+        transform: translateY(-20px) rotate(5deg);
+      }
+    }
+
+    .subjects {
+      padding: 70px 8%;
+      text-align: center;
+      background: #0b1b30;
+    }
+
+    .subjects h2 {
+      font-size: 35px;
+      margin-bottom: 40px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      padding: 30px 20px;
+      background: #132941;
+      border-radius: 15px;
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      background: #1b3b5d;
+    }
+
+    .card .icon {
+      font-size: 45px;
+      margin-bottom: 15px;
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      color: #38bdf8;
+    }
+
+    .card p {
+      color: #cbd5e1;
+    }
+
+    footer {
+      text-align: center;
+      padding: 25px;
+      background: #050c16;
+      color: #94a3b8;
+    }
+
+    @media (max-width: 800px) {
+      .hero {
+        flex-direction: column;
+        text-align: center;
+        gap: 40px;
+      }
+
+      .hero-text h1 {
+        font-size: 40px;
+      }
+
+      .plane {
+        font-size: 100px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      nav {
+        display: none;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">✈️ PESAWAT TEMPUR IPS</div>
+
+    <nav>
+      <a href="#beranda">Beranda</a>
+      <a href="#materi">Materi</a>
+      <a href="#main">Mulai Game</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="beranda">
+    <div class="hero-text">
+      <h1>Belajar IPS dengan <span>Seru!</span></h1>
+
+      <p>
+        Terbang, bertempur, dan uji pengetahuanmu
+        tentang ekonomi, sejarah, geografi, dan sosiologi
+        dalam game Pesawat Tempur IPS.
+      </p>
+
+      <a href="#main" class="btn" onclick="mulaiGame()">
+        🚀 Mulai Bermain
+      </a>
+    </div>
+
+    <div class="plane">✈️</div>
+  </section>
+
+  <section class="subjects" id="materi">
+    <h2>📚 Materi IPS</h2>
+
+    <div class="cards">
+
+      <div class="card">
+        <div class="icon">💰</div>
+        <h3>Ekonomi</h3>
+        <p>Uji pengetahuan tentang kegiatan ekonomi dan kehidupan masyarakat.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">🏛️</div>
+        <h3>Sejarah</h3>
+        <p>Kenali berbagai peristiwa penting dalam sejarah.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">🌍</div>
+        <h3>Geografi</h3>
+        <p>Jelajahi pengetahuan tentang bumi, wilayah, dan lingkungan.</p>
+      </div>
+
+      <div class="card">
+        <div class="icon">👥</div>
+        <h3>Sosiologi</h3>
+        <p>Pelajari kehidupan sosial dan interaksi dalam masyarakat.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="subjects" id="main">
+    <h2>🎮 Siap Menjadi Pilot IPS?</h2>
+
+    <p style="margin-bottom: 25px; color:#cbd5e1;">
+      Jawab pertanyaan dengan benar dan kumpulkan skor tertinggi!
+    </p>
+
+    <button class="btn" onclick="mulaiGame()">
+      🚀 MULAI GAME
+    </button>
+  </section>
+
+  <footer>
+    © 2026 Pesawat Tempur IPS | Game Edukasi
+  </footer>
+
+  <script>
+    function mulaiGame() {
+      alert("Selamat datang di Pesawat Tempur IPS! 🚀");
+    }
+  </script>
+
+</body>
+</html>
