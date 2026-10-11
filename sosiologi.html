@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sosiologi — Pesawat Tempur IPS</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #07111f;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 20px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0b1b30;
+      border-bottom: 2px solid #a855f7;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: #c084fc;
+    }
+
+    .back-btn {
+      color: white;
+      text-decoration: none;
+      background: #a855f7;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #7e22ce;
+    }
+
+    .container {
+      flex: 1;
+      padding: 60px 8%;
+      text-align: center;
+    }
+
+    .container h1 {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .container h1 span {
+      color: #c084fc;
+    }
+
+    .container > p {
+      color: #cbd5e1;
+      margin-bottom: 40px;
+      font-size: 18px;
+    }
+
+    .bab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .bab-card {
+      background: #132941;
+      border-radius: 15px;
+      padding: 30px 20px;
+      text-decoration: none;
+      color: white;
+      transition: 0.3s;
+      border: 2px solid transparent;
+      display: block;
+    }
+
+    .bab-card:hover {
+      transform: translateY(-8px);
+      background: #1b3b5d;
+      border-color: #c084fc;
+    }
+
+    .bab-card .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .bab-card h3 {
+      color: #c084fc;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    .bab-card p {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #050c16;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    @media (max-width: 500px) {
+      .container h1 { font-size: 28px; }
+      .bab-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">✈️ SOSIOLOGI — PESAWAT TEMPUR IPS</div>
+    <a href="index.html" class="back-btn">← Kembali</a>
+  </header>
+
+  <div class="container">
+    <h1>📚 Materi <span>Sosiologi</span></h1>
+    <p>Pilih bab untuk mulai bermain dan uji pengetahuanmu!</p>
+
+    <div class="bab-grid">
+
+      <a href="sosiologi-bab1.html" class="bab-card">
+        <div class="icon">🧑‍🤝‍🧑</div>
+        <h3>Bab 1 — Manusia & Masyarakat</h3>
+        <p>Hakikat manusia sebagai makhluk individu dan sosial.</p>
+      </a>
+
+      <a href="sosiologi-bab2.html" class="bab-card">
+        <div class="icon">🔄</div>
+        <h3>Bab 2 — Interaksi Sosial</h3>
+        <p>Bentuk interaksi, kerja sama, dan proses sosial.</p>
+      </a>
+
+      <a href="sosiologi-bab3.html" class="bab-card">
+        <div class="icon">⚖️</div>
+        <h3>Bab 3 — Nilai & Norma Sosial</h3>
+        <p>Nilai, norma, dan keteraturan dalam masyarakat.</p>
+      </a>
+
+      <a href="sosiologi-bab4.html" class="bab-card">
+        <div class="icon">🏘️</div>
+        <h3>Bab 4 — Sosialisasi & Kepribadian</h3>
+        <p>Proses sosialisasi dan pembentukan kepribadian.</p>
+      </a>
+
+      <a href="sosiologi-bab5.html" class="bab-card">
+        <div class="icon">🌐</div>
+        <h3>Bab 5 — Kelompok Sosial</h3>
+        <p>Jenis kelompok sosial dan dinamikanya.</p>
+      </a>
+
+      <a href="sosiologi-bab6.html" class="bab-card">
+        <div class="icon">🕊️</div>
+        <h3>Bab 6 — Perubahan & Konflik Sosial</h3>
+        <p>Perubahan sosial, konflik, dan upaya penyelesaian.</p>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Pesawat Tempur IPS | Game Edukasi Sosiologi
+  </footer>
+
+</body>
+</html>
