@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ekonomi — Pesawat Tempur IPS</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #07111f;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 20px 8%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0b1b30;
+      border-bottom: 2px solid #0ea5e9;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: #38bdf8;
+    }
+
+    .back-btn {
+      color: white;
+      text-decoration: none;
+      background: #0ea5e9;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #0284c7;
+    }
+
+    .container {
+      flex: 1;
+      padding: 60px 8%;
+      text-align: center;
+    }
+
+    .container h1 {
+      font-size: 40px;
+      margin-bottom: 10px;
+    }
+
+    .container h1 span {
+      color: #38bdf8;
+    }
+
+    .container > p {
+      color: #cbd5e1;
+      margin-bottom: 40px;
+      font-size: 18px;
+    }
+
+    .bab-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .bab-card {
+      background: #132941;
+      border-radius: 15px;
+      padding: 30px 20px;
+      text-decoration: none;
+      color: white;
+      transition: 0.3s;
+      border: 2px solid transparent;
+      display: block;
+    }
+
+    .bab-card:hover {
+      transform: translateY(-8px);
+      background: #1b3b5d;
+      border-color: #38bdf8;
+    }
+
+    .bab-card .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .bab-card h3 {
+      color: #38bdf8;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    .bab-card p {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #050c16;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    @media (max-width: 500px) {
+      .container h1 { font-size: 28px; }
+      .bab-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">✈️ EKONOMI — PESAWAT TEMPUR IPS</div>
+    <a href="index.html" class="back-btn">← Kembali</a>
+  </header>
+
+  <div class="container">
+    <h1>📚 Materi <span>Ekonomi</span></h1>
+    <p>Pilih bab untuk mulai bermain dan uji pengetahuanmu!</p>
+
+    <div class="bab-grid">
+
+      <a href="ekonomi-bab1.html" class="bab-card">
+        <div class="icon">🏭</div>
+        <h3>Bab 1 — Kegiatan Ekonomi</h3>
+        <p>Produksi, distribusi, dan konsumsi dalam kehidupan sehari-hari.</p>
+      </a>
+
+      <a href="ekonomi-bab2.html" class="bab-card">
+        <div class="icon">👥</div>
+        <h3>Bab 2 — Pelaku Ekonomi</h3>
+        <p>Rumah tangga, perusahaan, pemerintah, dan masyarakat luar negeri.</p>
+      </a>
+
+      <a href="ekonomi-bab3.html" class="bab-card">
+        <div class="icon">⚖️</div>
+        <h3>Bab 3 — Harga dan Pasar</h3>
+        <p>Permintaan, penawaran, harga keseimbangan, dan jenis pasar.</p>
+      </a>
+
+      <a href="ekonomi-bab4.html" class="bab-card">
+        <div class="icon">🏦</div>
+        <h3>Bab 4 — Lembaga Keuangan</h3>
+        <p>Bank, koperasi, dan lembaga keuangan non-bank.</p>
+      </a>
+
+      <a href="ekonomi-bab5.html" class="bab-card">
+        <div class="icon">🌍</div>
+        <h3>Bab 5 — Perdagangan Internasional</h3>
+        <p>Ekspor, impor, dan kerja sama ekonomi antarnegara.</p>
+      </a>
+
+      <a href="ekonomi-bab6.html" class="bab-card">
+        <div class="icon">💳</div>
+        <h3>Bab 6 — Ekonomi Digital</h3>
+        <p>Literasi finansial, uang digital, dan ekonomi berbasis teknologi.</p>
+      </a>
+
+    </div>
+  </div>
+
+  <footer>
+    © 2026 Pesawat Tempur IPS | Game Edukasi Ekonomi
+  </footer>
+
+</body>
+</html>
