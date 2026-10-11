@@ -13,6 +13,10 @@
       font-family: Arial, sans-serif;
     }
 
+    html {
+      scroll-behavior: smooth; /* scroll halus */
+    }
+
     body {
       background: #07111f;
       color: white;
@@ -24,6 +28,9 @@
       justify-content: space-between;
       align-items: center;
       background: #0b1b30;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
     .logo {
@@ -80,6 +87,9 @@
       border-radius: 10px;
       font-weight: bold;
       transition: 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 16px;
     }
 
     .btn:hover {
@@ -211,6 +221,7 @@
         dalam game Pesawat Tempur IPS.
       </p>
 
+      <!-- Tombol langsung scroll ke Materi, tanpa popup -->
       <a href="#materi" class="btn">
         🚀 Mulai Bermain
       </a>
@@ -258,6 +269,7 @@
       Pilih salah satu materi di atas untuk mulai bermain!
     </p>
 
+    <!-- Tombol juga scroll ke Materi, tanpa popup -->
     <a href="#materi" class="btn">
       🚀 PILIH MATERI
     </a>
