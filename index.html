@@ -123,11 +123,17 @@
       background: #132941;
       border-radius: 15px;
       transition: 0.3s;
+      text-decoration: none;
+      color: white;
+      display: block;
+      cursor: pointer;
+      border: 2px solid transparent;
     }
 
     .card:hover {
       transform: translateY(-8px);
       background: #1b3b5d;
+      border-color: #38bdf8;
     }
 
     .card .icon {
@@ -205,7 +211,7 @@
         dalam game Pesawat Tempur IPS.
       </p>
 
-      <a href="#main" class="btn" onclick="mulaiGame()">
+      <a href="#materi" class="btn">
         🚀 Mulai Bermain
       </a>
     </div>
@@ -218,29 +224,29 @@
 
     <div class="cards">
 
-      <div class="card">
+      <a href="https://ruangips.github.io/pesawattempur/ekonomi.html" class="card">
         <div class="icon">💰</div>
         <h3>Ekonomi</h3>
         <p>Uji pengetahuan tentang kegiatan ekonomi dan kehidupan masyarakat.</p>
-      </div>
+      </a>
 
-      <div class="card">
+      <a href="https://ruangips.github.io/pesawattempur/sejarah.html" class="card">
         <div class="icon">🏛️</div>
         <h3>Sejarah</h3>
         <p>Kenali berbagai peristiwa penting dalam sejarah.</p>
-      </div>
+      </a>
 
-      <div class="card">
+      <a href="https://ruangips.github.io/pesawattempur/geografi.html" class="card">
         <div class="icon">🌍</div>
         <h3>Geografi</h3>
         <p>Jelajahi pengetahuan tentang bumi, wilayah, dan lingkungan.</p>
-      </div>
+      </a>
 
-      <div class="card">
+      <a href="https://ruangips.github.io/pesawattempur/sosiologi.html" class="card">
         <div class="icon">👥</div>
         <h3>Sosiologi</h3>
         <p>Pelajari kehidupan sosial dan interaksi dalam masyarakat.</p>
-      </div>
+      </a>
 
     </div>
   </section>
@@ -249,23 +255,17 @@
     <h2>🎮 Siap Menjadi Pilot IPS?</h2>
 
     <p style="margin-bottom: 25px; color:#cbd5e1;">
-      Jawab pertanyaan dengan benar dan kumpulkan skor tertinggi!
+      Pilih salah satu materi di atas untuk mulai bermain!
     </p>
 
-    <button class="btn" onclick="mulaiGame()">
-      🚀 MULAI GAME
-    </button>
+    <a href="#materi" class="btn">
+      🚀 PILIH MATERI
+    </a>
   </section>
 
   <footer>
     © 2026 Pesawat Tempur IPS | Game Edukasi
   </footer>
-
-  <script>
-    function mulaiGame() {
-      alert("Selamat datang di Pesawat Tempur IPS! 🚀");
-    }
-  </script>
 
 </body>
 </html>
