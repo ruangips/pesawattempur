@@ -3264,48 +3264,367 @@ function drawToast() {
   ctx.restore();
 }
 
+/* ═══ IKON VEKTOR UNTUK HALAMAN BERANDA ═══ */
+function drawMenuIcon(kind, x, y, r, color) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = Math.max(1.5, r * 0.14);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 10;
+
+  if (kind === 'level') {
+    for (let i = 0; i < 3; i++) {
+      const yy = -r * 0.46 + i * r * 0.44;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.52, yy);
+      ctx.lineTo(0, yy - r * 0.30);
+      ctx.lineTo(r * 0.52, yy);
+      ctx.stroke();
+    }
+  } else if (kind === 'quiz') {
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.38, -r * 0.56);
+    ctx.lineTo(r * 0.38, -r * 0.56);
+    ctx.lineTo(r * 0.38, r * 0.56);
+    ctx.lineTo(-r * 0.38, r * 0.56);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.20, -r * 0.22); ctx.lineTo(r * 0.20, -r * 0.22);
+    ctx.moveTo(-r * 0.20, 0);         ctx.lineTo(r * 0.20, 0);
+    ctx.moveTo(-r * 0.20, r * 0.22);  ctx.lineTo(r * 0.06, r * 0.22);
+    ctx.stroke();
+  } else if (kind === 'shield') {
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 0.60);
+    ctx.lineTo(r * 0.50, -r * 0.34);
+    ctx.lineTo(r * 0.50, r * 0.08);
+    ctx.quadraticCurveTo(r * 0.50, r * 0.50, 0, r * 0.64);
+    ctx.quadraticCurveTo(-r * 0.50, r * 0.50, -r * 0.50, r * 0.08);
+    ctx.lineTo(-r * 0.50, -r * 0.34);
+    ctx.closePath();
+    ctx.stroke();
+  } else if (kind === 'bolt') {
+    ctx.beginPath();
+    ctx.moveTo(r * 0.16, -r * 0.62);
+    ctx.lineTo(-r * 0.36, r * 0.08);
+    ctx.lineTo(-r * 0.02, r * 0.08);
+    ctx.lineTo(-r * 0.16, r * 0.62);
+    ctx.lineTo(r * 0.36, -r * 0.08);
+    ctx.lineTo(r * 0.02, -r * 0.08);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ═══ HALAMAN BERANDA (LANDING PAGE) ═══ */
 function drawMenu() {
   const mu = Math.min(uiScale, 1.4);
+  const cx = W / 2;
+  const t  = state.gameTime;
+
   ctx.save();
-  const bgGrad = ctx.createRadialGradient(W/2, H/2, 100, W/2, H/2, H);
-  bgGrad.addColorStop(0, 'rgba(5, 25, 55, 0.85)');
-  bgGrad.addColorStop(1, 'rgba(1, 6, 16, 0.92)');
+
+  /* ── 1. BACKDROP ── */
+  const bgGrad = ctx.createRadialGradient(cx, H * 0.38, 60, cx, H * 0.55, H * 1.20);
+  bgGrad.addColorStop(0.00, 'rgba(6, 30, 66, 0.72)');
+  bgGrad.addColorStop(0.50, 'rgba(3, 15, 36, 0.82)');
+  bgGrad.addColorStop(1.00, 'rgba(1, 4, 12, 0.92)');
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, W, H);
 
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const titleSize = Math.round(58 * Math.min(mu, 1.15));
-  ctx.font = `bold ${Math.round(18 * mu)}px system-ui, sans-serif`;
-  ctx.fillStyle = C.cyan;
-  ctx.fillText('◈  KUIS SEJARAH — MATERI SMA  ◈', W/2, 48);
-  ctx.font = `bold ${titleSize}px system-ui, sans-serif`;
-  const tg = ctx.createLinearGradient(W/2 - 400, 0, W/2 + 400, 0);
-  tg.addColorStop(0, C.cyan); tg.addColorStop(0.35, C.white);
-  tg.addColorStop(0.7, C.blue); tg.addColorStop(1, C.purple);
-  ctx.fillStyle = tg;
-  ctx.fillText('ASAL USUL', W/2, 122);
-  ctx.fillText('MANUSIA', W/2, 122 + titleSize * 1.08);
-
-  ctx.font = `bold ${Math.round(14 * mu)}px system-ui, sans-serif`;
-  ctx.fillStyle = hex2rgba(C.white, 0.85);
-  ctx.fillText('⚡  10 LEVEL × 4 SOAL  ·  BIG HISTORY → PERADABAN AWAL  ⚡', W/2, 244);
-
-  const blink = 0.7 + Math.sin(state.gameTime * 4) * 0.3;
-  ctx.globalAlpha = blink;
-  const btnW = Math.min(620, W * 0.52), btnH = 66;
-  const btnX = (W - btnW) / 2, btnY = 616;
-  roundRect(ctx, btnX, btnY, btnW, btnH, 14);
-  const bg = ctx.createLinearGradient(btnX, 0, btnX + btnW, 0);
-  bg.addColorStop(0, hex2rgba(C.cyan, 0.25));
-  bg.addColorStop(0.5, hex2rgba(C.blue, 0.35));
-  bg.addColorStop(1, hex2rgba(C.cyan, 0.25));
-  ctx.fillStyle = bg; ctx.fill();
-  ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8;
+  /* grid halus */
+  ctx.save();
+  ctx.globalAlpha = 0.05;
+  ctx.strokeStyle = C.cyan;
+  ctx.lineWidth = 1;
+  const gs = 64;
+  const gx0 = ((cx % gs) + gs) % gs;
+  ctx.beginPath();
+  for (let x = gx0; x < W + gs; x += gs) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = 0; y < H + gs; y += gs) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
   ctx.stroke();
+  ctx.restore();
+
+  /* ── 2. BADGE ATAS ── */
+  const badgeText = '◈  KUIS SEJARAH INTERAKTIF  ·  MATERI SMA  ◈';
+  ctx.font = `bold ${Math.round(13 * mu)}px system-ui, sans-serif`;
+  const bw = ctx.measureText(badgeText).width + 46;
+  const bh = 30, bx = cx - bw / 2, by = 24;
+  roundRect(ctx, bx, by, bw, bh, bh / 2);
+  ctx.fillStyle = 'rgba(0, 200, 255, 0.08)';
+  ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.45);
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = hex2rgba(C.cyan, 0.95);
+  ctx.fillText(badgeText, cx, by + bh / 2 + 1);
+
+  /* ── 3. GLOW DI BELAKANG JUDUL ── */
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const tGlow = ctx.createRadialGradient(cx, 108, 0, cx, 108, W * 0.42);
+  tGlow.addColorStop(0, hex2rgba(C.cyan, 0.16));
+  tGlow.addColorStop(0.55, hex2rgba(C.blue, 0.07));
+  tGlow.addColorStop(1, 'transparent');
+  ctx.fillStyle = tGlow;
+  ctx.fillRect(0, 0, W, 230);
+  ctx.restore();
+
+  /* ── 4. JUDUL ── */
+  const titleSize = Math.min(Math.round(74 * Math.min(mu, 1.12)), W * 0.066);
+  ctx.font = `900 ${titleSize}px system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const tg = ctx.createLinearGradient(cx - W * 0.35, 0, cx + W * 0.35, 0);
+  tg.addColorStop(0.00, '#00d0ff');
+  tg.addColorStop(0.28, '#bff2ff');
+  tg.addColorStop(0.50, '#ffffff');
+  tg.addColorStop(0.74, '#7fc4ff');
+  tg.addColorStop(1.00, '#9b8cff');
+  ctx.fillStyle = tg;
+  ctx.shadowColor = hex2rgba(C.cyan, 0.55);
+  ctx.shadowBlur = 26;
+  ctx.fillText('ASAL USUL MANUSIA', cx, 104);
+  ctx.shadowBlur = 0;
+
+  /* subjudul */
+  ctx.font = `600 ${Math.round(15 * mu)}px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.white, 0.72);
+  ctx.fillText('Petualangan sejarah dari Big Bang hingga peradaban awal manusia', cx, 156);
+
+  /* ── 5. PEMBATAS ── */
+  const dvY = 182, dvW = Math.min(W * 0.62, 760);
+  const dvG = ctx.createLinearGradient(cx - dvW / 2, 0, cx + dvW / 2, 0);
+  dvG.addColorStop(0.00, 'transparent');
+  dvG.addColorStop(0.50, hex2rgba(C.cyan, 0.55));
+  dvG.addColorStop(1.00, 'transparent');
+  ctx.strokeStyle = dvG;
+  ctx.lineWidth = 1.4;
+  ctx.beginPath();
+  ctx.moveTo(cx - dvW / 2, dvY);
+  ctx.lineTo(cx + dvW / 2, dvY);
+  ctx.stroke();
+  ctx.fillStyle = C.cyan;
+  ctx.save();
+  ctx.translate(cx, dvY);
+  ctx.rotate(Math.PI / 4);
+  ctx.shadowColor = C.cyan;
+  ctx.shadowBlur = 12;
+  ctx.fillRect(-4, -4, 8, 8);
+  ctx.restore();
+
+  /* ── 6. KARTU FITUR ── */
+  const cards = [
+    { icon: 'level',  title: '10 LEVEL',  desc: 'Big Bang → peradaban awal' },
+    { icon: 'quiz',   title: '40 SOAL',   desc: '4 pilihan ganda tiap level' },
+    { icon: 'shield', title: '5 ENERGI',  desc: 'Plus perisai penyerap' },
+    { icon: 'bolt',   title: 'COMBO',     desc: 'Streak & mode overdrive' },
+  ];
+  const cGap  = Math.max(10, W * 0.012);
+  const cAllW = Math.min(W * 0.90, 1240);
+  const cardW = (cAllW - cGap * 3) / 4;
+  const cardH = 100;
+  const cardY = 200;
+  const cardX0 = cx - cAllW / 2;
+
+  cards.forEach((c, i) => {
+    const x = cardX0 + i * (cardW + cGap);
+
+    roundRect(ctx, x, cardY, cardW, cardH, 12);
+    const cg = ctx.createLinearGradient(x, cardY, x, cardY + cardH);
+    cg.addColorStop(0, 'rgba(10, 34, 70, 0.85)');
+    cg.addColorStop(1, 'rgba(4, 14, 34, 0.92)');
+    ctx.fillStyle = cg;
+    ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.cyan, 0.35);
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    /* garis aksen atas */
+    const ag = ctx.createLinearGradient(x, 0, x + cardW, 0);
+    ag.addColorStop(0.00, 'transparent');
+    ag.addColorStop(0.50, hex2rgba(C.cyan, 0.85));
+    ag.addColorStop(1.00, 'transparent');
+    ctx.strokeStyle = ag;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x + 12, cardY + 1);
+    ctx.lineTo(x + cardW - 12, cardY + 1);
+    ctx.stroke();
+
+    /* ikon */
+    const iconR = 15;
+    const iconX = x + 34;
+    const iconY = cardY + cardH / 2;
+    ctx.beginPath();
+    ctx.arc(iconX, iconY, iconR + 7, 0, Math.PI * 2);
+    ctx.fillStyle = hex2rgba(C.cyan, 0.10);
+    ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.cyan, 0.50);
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    drawMenuIcon(c.icon, iconX, iconY, iconR, C.cyan);
+
+    /* teks */
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.round(15 * mu)}px system-ui, sans-serif`;
+    ctx.fillStyle = C.white;
+    ctx.fillText(c.title, x + 66, cardY + 38);
+
+    const dfont = `${Math.round(11.5 * mu)}px system-ui, sans-serif`;
+    const dlines = wrapText(c.desc, cardW - 80, dfont);
+    ctx.font = dfont;
+    ctx.fillStyle = hex2rgba(C.white, 0.58);
+    const dlh = Math.round(14 * mu);
+    dlines.slice(0, 2).forEach((ln, k) => {
+      ctx.fillText(ln, x + 66, cardY + 62 + k * dlh);
+    });
+  });
+
+  /* ── 7. JUDUL SEKSI: CARA BERMAIN ── */
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `bold ${Math.round(12 * mu)}px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.cyan, 0.85);
+  ctx.fillText('—   C A R A   B E R M A I N   —', cx, 334);
+
+  /* ── 8. LANGKAH BERMAIN ── */
+  const steps = [
+    { n: '1', title: 'BACA SOAL',       desc: 'Pertanyaan tampil di panel atas layar.' },
+    { n: '2', title: 'TEMBAK JAWABAN',  desc: 'Ketuk pesawat yang membawa jawaban benar.' },
+    { n: '3', title: 'JAGA ENERGI',     desc: 'Salah 2× atau waktu habis = soal gagal.' },
+  ];
+  const sGap  = Math.max(12, W * 0.014);
+  const sAllW = Math.min(W * 0.90, 1240);
+  const stepW = (sAllW - sGap * 2) / 3;
+  const stepH = 84;
+  const stepY = 356;
+  const stepX0 = cx - sAllW / 2;
+
+  steps.forEach((s, i) => {
+    const x = stepX0 + i * (stepW + sGap);
+
+    roundRect(ctx, x, stepY, stepW, stepH, 12);
+    const sg = ctx.createLinearGradient(x, stepY, x, stepY + stepH);
+    sg.addColorStop(0, 'rgba(8, 26, 58, 0.80)');
+    sg.addColorStop(1, 'rgba(3, 11, 28, 0.88)');
+    ctx.fillStyle = sg;
+    ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.blue, 0.32);
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    /* badge nomor */
+    const nx = x + 36, ny = stepY + stepH / 2;
+    ctx.beginPath();
+    ctx.arc(nx, ny, 17, 0, Math.PI * 2);
+    const ng = ctx.createLinearGradient(nx - 17, ny - 17, nx + 17, ny + 17);
+    ng.addColorStop(0, hex2rgba(C.cyan, 0.35));
+    ng.addColorStop(1, hex2rgba(C.blue, 0.25));
+    ctx.fillStyle = ng;
+    ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.cyan, 0.80);
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+    ctx.font = `bold ${Math.round(17 * mu)}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = C.white;
+    ctx.shadowColor = C.cyan;
+    ctx.shadowBlur = 10;
+    ctx.fillText(s.n, nx, ny + 1);
+    ctx.shadowBlur = 0;
+
+    /* teks langkah */
+    ctx.textAlign = 'left';
+    ctx.font = `bold ${Math.round(14 * mu)}px system-ui, sans-serif`;
+    ctx.fillStyle = C.white;
+    ctx.fillText(s.title, x + 66, stepY + 32);
+
+    const dfont = `${Math.round(11.5 * mu)}px system-ui, sans-serif`;
+    const dlines = wrapText(s.desc, stepW - 84, dfont);
+    ctx.font = dfont;
+    ctx.fillStyle = hex2rgba(C.white, 0.58);
+    const dlh = Math.round(14 * mu);
+    dlines.slice(0, 2).forEach((ln, k) => {
+      ctx.fillText(ln, x + 66, stepY + 54 + k * dlh);
+    });
+  });
+
+  /* ── 9. TOMBOL MULAI ── */
+  const pulse = 0.5 + Math.sin(t * 3) * 0.5;
+  const btnW = Math.min(560, W * 0.46);
+  const btnH = 70;
+  const btnX = cx - btnW / 2;
+  const btnY = 490;
+
+  ctx.save();
+  ctx.shadowColor = hex2rgba(C.cyan, 0.55 + pulse * 0.35);
+  ctx.shadowBlur = 24 + pulse * 18;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 16);
+  const bgi = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
+  bgi.addColorStop(0.00, 'rgba(0, 190, 255, 0.30)');
+  bgi.addColorStop(0.50, 'rgba(60, 120, 255, 0.45)');
+  bgi.addColorStop(1.00, 'rgba(120, 90, 255, 0.30)');
+  ctx.fillStyle = bgi;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.95);
+  ctx.lineWidth = 2.6;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 16);
+  ctx.stroke();
+
+  /* kilau menyapu */
+  ctx.save();
+  roundRect(ctx, btnX, btnY, btnW, btnH, 16);
+  ctx.clip();
+  const sweepX = btnX - btnW * 0.6 + ((t * 260) % (btnW * 2.2));
+  const shG = ctx.createLinearGradient(sweepX, 0, sweepX + btnW * 0.45, 0);
+  shG.addColorStop(0.0, 'rgba(255,255,255,0)');
+  shG.addColorStop(0.5, 'rgba(255,255,255,0.22)');
+  shG.addColorStop(1.0, 'rgba(255,255,255,0)');
+  ctx.fillStyle = shG;
+  ctx.fillRect(btnX, btnY, btnW, btnH);
+  ctx.restore();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.font = `bold ${Math.round(24 * mu)}px system-ui, sans-serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = C.white;
-  ctx.fillText('▶  MULAI PETUALANGAN  ◀', W/2, btnY + btnH / 2);
+  ctx.shadowColor = hex2rgba(C.cyan, 0.9);
+  ctx.shadowBlur = 14;
+  ctx.fillText('▶  MULAI PETUALANGAN', cx, btnY + btnH / 2 + 1);
+  ctx.shadowBlur = 0;
+
+  /* ── 10. BAR TIPS ── */
+  const tipText = 'Jawab cepat = bonus waktu   ·   2× salah = soal gagal   ·   Combo penuh → OVERDRIVE';
+  ctx.font = `600 ${Math.round(12.5 * mu)}px system-ui, sans-serif`;
+  const tipW = Math.min(ctx.measureText(tipText).width + 56, W * 0.94);
+  const tipH = 34, tipY = 594;
+  roundRect(ctx, cx - tipW / 2, tipY, tipW, tipH, tipH / 2);
+  ctx.fillStyle = 'rgba(255, 176, 64, 0.08)';
+  ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.amber, 0.38);
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+  ctx.fillStyle = hex2rgba(C.amber, 0.92);
+  ctx.fillText(tipText, cx, tipY + tipH / 2 + 1);
+
+  /* ── 11. FOOTER ── */
+  ctx.font = `${Math.round(11 * mu)}px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.white, 0.35);
+  ctx.fillText('40 soal pilihan ganda  ·  10 level  ·  Big History & Peradaban Awal', cx, 662);
+
   ctx.restore();
 }
 
