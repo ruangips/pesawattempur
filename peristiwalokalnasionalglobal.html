@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#020810">
+<title>Mirage Kronologi — Peristiwa Lokal, Nasional, Global</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #010610; overflow: hidden;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    touch-action: none; overscroll-behavior: none;
+    position: fixed; top: 0; left: 0;
+    user-select: none; -webkit-user-select: none;
+    display: flex; flex-direction: column;
+  }
+  #gameWrap {
+    flex: 1 1 auto; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  #game {
+    display: block; cursor: pointer; touch-action: none;
+    max-width: 100%; max-height: 100%;
+    background: transparent;
+  }
+  @media (min-width: 901px) {
+    #game { border-radius: 8px; box-shadow: 0 0 60px rgba(0, 180, 255, 0.3); }
+  }
+  #rotateOverlay {
+    display: none; position: fixed; inset: 0; z-index: 99999;
+    background: radial-gradient(circle at 50% 40%, #082040 0%, #010610 55%, #000205 100%);
+    align-items: center; justify-content: center; flex-direction: column;
+    text-align: center; padding: 32px; overflow: hidden; color: #fff;
+  }
+  .rotateInner { display: flex; flex-direction: column; align-items: center; gap: 14px; max-width: 360px; }
+  .phoneIcon { font-size: 100px; display: inline-block; animation: phoneRotate 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; filter: drop-shadow(0 0 30px rgba(0,180,255,0.85)); }
+  @keyframes phoneRotate { 0%, 15% { transform: rotate(0deg); } 50%, 65% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+  #rotateOverlay .title { font-size: 22px; font-weight: 800; letter-spacing: 4px; color: #44cfff; text-shadow: 0 0 20px rgba(68,207,255,0.9); }
+  #rotateOverlay .subtitle { font-size: 14px; color: rgba(255,255,255,0.78); line-height: 1.65; }
+  body.portrait-locked #rotateOverlay { display: flex; }
+  body.portrait-locked #gameWrap { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="rotateOverlay">
+  <div class="rotateInner">
+    <div class="phoneIcon">📱</div>
+    <div class="title">PUTAR PERANGKAT</div>
+    <div class="subtitle">Game ini dirancang untuk mode <b>LANDSCAPE</b>. Silakan putar HP Anda untuk memulai pertempuran sejarah.</div>
+  </div>
+</div>
+
+<div id="gameWrap">
+  <canvas id="game" width="1200" height="720"></canvas>
+</div>
+
+<script>
+'use strict';
+
+const cvs = document.getElementById('game');
+const ctx = cvs.getContext('2d');
+
+const BASE_H = 720;
+let W = 1200, H = BASE_H;
+const TOTAL_LEVELS = 6;
+const QUESTIONS_PER_LEVEL = 15;
+const SHIELD_RADIUS = 82;
+
+const C = {
+  cyan: '#00d0ff', cyanDark: '#0070a0', blue: '#4a9fff', blueDeep: '#0a2a5c',
+  teal: '#00e5d0', purple: '#7b68ae', indigo: '#3a2b8a', lime: '#00ffb0',
+  amber: '#ffb040', yellow: '#ffe040', pink: '#ff5a7a', red: '#ff2020',
+  green: '#20ff60', greenBright: '#5aff8a', white: '#ffffff',
+  orange: '#ff8020', magenta: '#ff40a0', violet: '#a070ff',
+};
+
+let viewScale = 1, uiScale = 1, baseScale = 1, dpr = 1;
+
+const isCoarsePointer = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+const isPortrait = () => window.innerHeight > window.innerWidth;
+
+function updateOrientationOverlay() {
+  const locked = isCoarsePointer() && isPortrait();
+  document.body.classList.toggle('portrait-locked', locked);
+  return locked;
+}
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+function hex2rgba(hex, a) {
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16);
+  const g = parseInt(h.substring(2,4),16);
+  const b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function resize() {
+  const locked = updateOrientationOverlay();
+  if (locked) return;
+  const wrap = document.getElementById('gameWrap');
+  if (!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  const vw = rect.width, vh = rect.height;
+  if (vw < 10 || vh < 10) { setTimeout(resize, 80); return; }
+  const aspect = clamp(vw / vh, 1.4, 2.6);
+  W = Math.round(BASE_H * aspect);
+  const s = Math.min(vw / W, vh / H) * 0.998;
+  viewScale = s;
+  uiScale = clamp(0.86 / s, 1, 1.75);
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cvs.style.width = (W * s) + 'px';
+  cvs.style.height = (H * s) + 'px';
+  cvs.width = Math.round(W * s * dpr);
+  cvs.height = Math.round(H * s * dpr);
+  baseScale = cvs.width / W;
+  initBackground();
+}
+
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => { setTimeout(resize, 200); setTimeout(resize, 500); });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+
+/* ═══════════ AUDIO ═══════════ */
+let actx = null;
+function initAudio() {
+  if (!actx) { try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { actx = null; } }
+  if (actx && actx.state === 'suspended') actx.resume();
+}
+function tone(f, d, t='square', v=0.06, s=null, dl=0) {
+  if (!actx) return;
+  const t0 = actx.currentTime + dl;
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = t; o.frequency.setValueAtTime(f, t0);
+  if (s) o.frequency.exponentialRampToValueAtTime(Math.max(20, s), t0 + d);
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(v, t0 + 0.008);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t0); o.stop(t0 + d + 0.02);
+}
+function noiseBurst(d=0.3, v=0.12, c=900, q=1) {
+  if (!actx) return;
+  const len = Math.floor(actx.sampleRate * d);
+  const buf = actx.createBuffer(1, len, actx.sampleRate);
+  const da = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) da[i] = (Math.random()*2-1) * Math.pow(1-i/len, 1.7);
+  const src = actx.createBufferSource(); src.buffer = buf;
+  const g = actx.createGain(); g.gain.value = v;
+  const f = actx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = c; f.Q.value = q;
+  src.connect(f); f.connect(g); g.connect(actx.destination); src.start();
+}
+
+/* ═══════════ BANK SOAL — 90 SOAL UNIK (6 Level × 15) ═══════════
+   Level 1: Pengertian & Perbedaan Tiga Skala (15)
+   Level 2: Hubungan Sebab-Akibat Antar Skala (15)
+   Level 3: Peristiwa Lokal di Indonesia (15)
+   Level 4: Peristiwa Nasional Indonesia (15)
+   Level 5: Peristiwa Global Dunia (15)
+   Level 6: Studi Kasus & Keterhubungan Masa (15)
+   ═══════════════════════════════════════════════════════════════ */
+const QUESTIONS = [
+  // ══ LEVEL 1 — PENGERTIAN & PERBEDAAN TIGA SKALA (15) ══
+  { lv:1, q:"Peristiwa yang terjadi di lingkup daerah tertentu dan berdampak pada masyarakat setempat disebut peristiwa...", o:["nasional","global","lokal","internasional"], a:2 },
+  { lv:1, q:"Peristiwa yang terjadi di lingkup negara dan berdampak pada seluruh bangsa disebut peristiwa...", o:["lokal","nasional","global","regional"], a:1 },
+  { lv:1, q:"Peristiwa yang terjadi di lingkup dunia dan memengaruhi banyak negara disebut peristiwa...", o:["lokal","nasional","global","daerah"], a:2 },
+  { lv:1, q:"Berikut yang termasuk contoh peristiwa lokal adalah...", o:["Proklamasi 1945","Bandung Lautan Api","Perang Dunia II","Sumpah Pemuda"], a:1 },
+  { lv:1, q:"Berikut yang termasuk contoh peristiwa nasional adalah...", o:["Bandung Lautan Api","Palagan Ambarawa","Proklamasi 1945","Perang Dingin"], a:2 },
+  { lv:1, q:"Berikut yang termasuk contoh peristiwa global adalah...", o:["Sumpah Pemuda","Reformasi 1998","Perang Dunia II","Pertempuran Surabaya"], a:2 },
+  { lv:1, q:"Perbedaan utama antara peristiwa lokal, nasional, dan global terletak pada...", o:["warna bendera","ruang lingkup","jumlah peserta","jenis senjata"], a:1 },
+  { lv:1, q:"Peristiwa lokal memiliki ruang lingkup yang...", o:["lebih luas dari nasional","lebih sempit dari nasional","sama dengan global","lebih luas dari global"], a:1 },
+  { lv:1, q:"Pelaku peristiwa lokal biasanya adalah...", o:["negara-negara besar","organisasi internasional","masyarakat dan tokoh daerah","PBB"], a:2 },
+  { lv:1, q:"Pelaku peristiwa global biasanya adalah...", o:["warga desa","tokoh daerah","negara besar dan organisasi dunia","kelompok kecil"], a:2 },
+  { lv:1, q:"Sumber sejarah untuk peristiwa lokal biasanya berupa...", o:["arsip PBB","berita internasional","cerita rakyat dan arsip desa","dokumen negara asing"], a:2 },
+  { lv:1, q:"Sumber sejarah untuk peristiwa global biasanya berupa...", o:["cerita rakyat","arsip desa","arsip internasional dan berita dunia","prasasti kuno"], a:2 },
+  { lv:1, q:"Ketiga skala peristiwa (lokal, nasional, global) memiliki hubungan yang bersifat...", o:["terpisah total","saling terhubung","saling bertentangan","tidak berkaitan"], a:1 },
+  { lv:1, q:"Contoh peristiwa yang termasuk skala lokal dan nasional sekaligus adalah...", o:["Perang Dingin","Pertempuran Surabaya 1945","Revolusi Industri","Pandemi COVID-19"], a:1 },
+  { lv:1, q:"Analogi 'lokal adalah batu bata, nasional adalah rumah, global adalah kota' menunjukkan bahwa...", o:["lokal tidak penting","lokal adalah dasar penyusun nasional","global paling penting","nasional tidak perlu lokal"], a:1 },
+
+  // ══ LEVEL 2 — HUBUNGAN SEBAB-AKIBAT ANTAR SKALA (15) ══
+  { lv:2, q:"Hubungan sebab-akibat antar peristiwa dalam sejarah disebut...", o:["kronologi","kausalitas","periodisasi","skala"], a:1 },
+  { lv:2, q:"Pola 'Perang Dunia II → pendudukan Jepang di Indonesia → Proklamasi 1945' menunjukkan hubungan...", o:["lokal → nasional","global → nasional","nasional → lokal","lokal → global"], a:1 },
+  { lv:2, q:"Pola 'Proklamasi Kemerdekaan → rakyat di berbagai daerah mengambil alih kekuasaan' menunjukkan hubungan...", o:["global → lokal","nasional → lokal","lokal → nasional","global → nasional"], a:1 },
+  { lv:2, q:"Pola 'Perlawanan rakyat Banda → inspirasi perlawanan nasional terhadap VOC' menunjukkan hubungan...", o:["global → lokal","nasional → global","lokal → nasional","lokal → global"], a:2 },
+  { lv:2, q:"Peristiwa global yang memicu pendudukan Jepang di Indonesia adalah...", o:["Perang Dunia I","Perang Dunia II","Perang Dingin","Revolusi Industri"], a:1 },
+  { lv:2, q:"Pertempuran Surabaya 1945 menarik perhatian dunia internasional, ini menunjukkan hubungan...", o:["lokal → global","global → lokal","nasional → global","global → nasional"], a:0 },
+  { lv:2, q:"Peristiwa sejarah bagaikan domino karena...", o:["selalu berwarna merah","satu peristiwa menjatuhkan peristiwa lain","selalu berbentuk kotak","tidak saling terkait"], a:1 },
+  { lv:2, q:"Contoh rantai sebab-akibat global → nasional → lokal adalah...", o:["Perang Dunia II → Jepang menduduki Indonesia → rakyat mengalami romusha","Proklamasi → Sumpah Pemuda → Budi Utomo","Reformasi → Proklamasi → VOC","Budi Utomo → Perang Dunia II → Bandung Lautan Api"], a:0 },
+  { lv:2, q:"Peristiwa lokal dapat memengaruhi peristiwa global melalui...", o:["pengaruh terhadap opini dunia internasional","penjualan senjata","perdagangan saham","pemilu negara lain"], a:0 },
+  { lv:2, q:"VOC didirikan (global/nasional) kemudian rakyat Banda melawan (lokal). Ini menunjukkan hubungan...", o:["lokal → global","global → lokal","lokal → nasional","nasional → global"], a:1 },
+  { lv:2, q:"Ketika Belanda mendirikan VOC, rakyat Banda melakukan perlawanan yang menginspirasi daerah lain. Ini adalah contoh hubungan...", o:["lokal → nasional","global → lokal","nasional → global","lokal → global"], a:0 },
+  { lv:2, q:"Pengaruh peristiwa global terhadap lokal biasanya melalui...", o:["perubahan kebijakan nasional","perubahan cuaca","gempa bumi","matahari"], a:0 },
+  { lv:2, q:"Kausalitas dalam sejarah membantu kita memahami...", o:["warna peristiwa","mengapa peristiwa terjadi","nama pelaku","lokasi geografis"], a:1 },
+  { lv:2, q:"Berikut yang BUKAN contoh hubungan sebab-akibat antar skala adalah...", o:["Perang Dunia II → pendudukan Jepang","Proklamasi → pengambilalihan kekuasaan daerah","VOC → perlawanan Banda","Bendera Indonesia berwarna merah putih"], a:3 },
+  { lv:2, q:"Memahami keterhubungan antar skala membantu kita melihat sejarah sebagai...", o:["cerita terpisah","kesatuan yang utuh","dongeng","mitos"], a:1 },
+
+  // ══ LEVEL 3 — PERISTIWA LOKAL DI INDONESIA (15) ══
+  { lv:3, q:"Peristiwa pengosongan dan pembakaran kota Bandung oleh rakyat agar tidak dijadikan markas Sekutu disebut...", o:["Bandung Lautan Api","Palagan Ambarawa","Pertempuran Surabaya","Medan Area"], a:0 },
+  { lv:3, q:"Bandung Lautan Api terjadi pada tanggal...", o:["17 Agustus 1945","10 November 1945","23 Maret 1946","28 Oktober 1928"], a:2 },
+  { lv:3, q:"Pertempuran sengit antara pasukan Indonesia melawan Sekutu di Ambarawa melahirkan tokoh besar...", o:["Jenderal Soedirman","Bung Tomo","Pangeran Diponegoro","Cut Nyak Dhien"], a:0 },
+  { lv:3, q:"Pertempuran 10 November 1945 di Surabaya diperingati sebagai...", o:["Hari Kemerdekaan","Hari Pahlawan Nasional","Hari Sumpah Pemuda","Hari Kebangkitan Nasional"], a:1 },
+  { lv:3, q:"Tokoh yang membakar semangat rakyat Surabaya pada 10 November 1945 adalah...", o:["Soekarno","Bung Tomo","Hatta","Soedirman"], a:1 },
+  { lv:3, q:"Peristiwa Merah Putih di Sulawesi (1946) ditandai dengan...", o:["pengibaran bendera Merah Putih","pembakaran kota","penyerahan senjata","perjanjian damai"], a:0 },
+  { lv:3, q:"Pertempuran Lima Hari di Semarang (1945) terjadi antara pemuda melawan tentara...", o:["Belanda","Inggris","Jepang","Portugis"], a:2 },
+  { lv:3, q:"Perlawanan rakyat Medan terhadap pasukan Sekutu dan NICA disebut...", o:["Medan Area","Bandung Lautan Api","Palagan Ambarawa","Surabaya Membara"], a:0 },
+  { lv:3, q:"Peristiwa lokal di berbagai daerah pada 1945–1946 menunjukkan bahwa semangat kemerdekaan...", o:["hanya di Jawa","menyebar cepat ke seluruh Nusantara","hanya di Sumatera","tidak ada"], a:1 },
+  { lv:3, q:"Peristiwa Bandung Lautan Api terjadi karena rakyat tidak ingin kotanya dijadikan markas...", o:["Jepang","Sekutu dan NICA","Portugis","Inggris saja"], a:1 },
+  { lv:3, q:"NICA adalah...", o:["tentara Jepang","pemerintahan sipil Hindia Belanda","organisasi PBB","pasukan Inggris"], a:1 },
+  { lv:3, q:"Peristiwa lokal pada 1945–1946 menunjukkan bahwa rakyat Indonesia...", o:["tidak peduli kemerdekaan","aktif mempertahankan kemerdekaan","menyerah pada Sekutu","mendukung Belanda"], a:1 },
+  { lv:3, q:"Palagan Ambarawa terjadi di provinsi...", o:["Jawa Timur","Jawa Tengah","Jawa Barat","Sumatera Utara"], a:1 },
+  { lv:3, q:"Pertempuran Surabaya dipicu oleh ultimatum dari...", o:["Jepang","Belanda","Inggris (Sekutu)","Portugis"], a:2 },
+  { lv:3, q:"Peristiwa lokal bukan hanya 'cerita daerah' karena...", o:["tidak penting","menjadi kepingan sejarah nasional","hanya untuk ujian","tidak berdampak"], a:1 },
+
+  // ══ LEVEL 4 — PERISTIWA NASIONAL INDONESIA (15) ══
+  { lv:4, q:"Ikrar satu tanah air, satu bangsa, satu bahasa diucapkan pada peristiwa...", o:["Sumpah Pemuda","Proklamasi","Reformasi","Kebangkitan Nasional"], a:0 },
+  { lv:4, q:"Sumpah Pemuda terjadi pada tanggal...", o:["17 Agustus 1945","28 Oktober 1928","20 Mei 1908","10 November 1945"], a:1 },
+  { lv:4, q:"Proklamasi Kemerdekaan Indonesia dibacakan pada tanggal...", o:["17 Agustus 1945","28 Oktober 1928","20 Mei 1908","10 November 1945"], a:0 },
+  { lv:4, q:"Proklamasi dibacakan oleh...", o:["Soekarno-Hatta","Soedirman","Bung Tomo","Diponegoro"], a:0 },
+  { lv:4, q:"Proklamasi dibacakan di Jalan...", o:["Malioboro","Pegangsaan Timur No. 56","Braga","Sudirman"], a:1 },
+  { lv:4, q:"Berdirinya Budi Utomo pada 20 Mei 1908 menandai...", o:["Kebangkitan Nasional","Sumpah Pemuda","Proklamasi","Reformasi"], a:0 },
+  { lv:4, q:"Gerakan mahasiswa dan rakyat yang menuntut perubahan politik dan demokrasi pada 1998 disebut...", o:["Reformasi","Proklamasi","Sumpah Pemuda","Kebangkitan Nasional"], a:0 },
+  { lv:4, q:"Reformasi 1998 mengakhiri era...", o:["Orde Lama","Orde Baru","Demokrasi Terpimpin","Kolonial"], a:1 },
+  { lv:4, q:"Konferensi Asia-Afrika 1955 diselenggarakan di kota...", o:["Jakarta","Bandung","Surabaya","Yogyakarta"], a:1 },
+  { lv:4, q:"Konferensi Asia-Afrika menolak...", o:["perdamaian","kolonialisme","pendidikan","perdagangan"], a:1 },
+  { lv:4, q:"Ciri peristiwa nasional adalah...", o:["melibatkan seluruh bangsa","hanya di satu desa","hanya di luar negeri","tidak berdampak"], a:0 },
+  { lv:4, q:"Peristiwa nasional sering menjadi pemicu...", o:["peristiwa lokal di berbagai daerah","gempa bumi","perubahan cuaca","gerhana matahari"], a:0 },
+  { lv:4, q:"Proklamasi 1945 memicu rakyat di berbagai daerah untuk...", o:["menyerah pada Jepang","mengambil alih kekuasaan dari Jepang","mendukung Belanda","berdiam diri"], a:1 },
+  { lv:4, q:"Peristiwa nasional yang menandai lahirnya negara Indonesia adalah...", o:["Sumpah Pemuda","Proklamasi Kemerdekaan","Reformasi","Kebangkitan Nasional"], a:1 },
+  { lv:4, q:"Peristiwa nasional dikenang bersama karena...", o:["hanya diketahui tokoh","menjadi tonggak sejarah bangsa","tidak penting","hanya di satu daerah"], a:1 },
+
+  // ══ LEVEL 5 — PERISTIWA GLOBAL DUNIA (15) ══
+  { lv:5, q:"Perang besar di Eropa yang berlangsung pada 1914–1918 disebut...", o:["Perang Dunia I","Perang Dunia II","Perang Dingin","Revolusi Industri"], a:0 },
+  { lv:5, q:"Perang global yang berlangsung pada 1939–1945 disebut...", o:["Perang Dunia I","Perang Dunia II","Perang Dingin","Perang Vietnam"], a:1 },
+  { lv:5, q:"Perang Dunia II menyebabkan Jepang menduduki Indonesia pada tahun...", o:["1940–1942","1942–1945","1945–1948","1939–1941"], a:1 },
+  { lv:5, q:"Persaingan antara Amerika Serikat dan Uni Soviet (1947–1991) disebut...", o:["Perang Dunia I","Perang Dunia II","Perang Dingin","Perang Teluk"], a:2 },
+  { lv:5, q:"Indonesia berusaha tidak memihak dalam Perang Dingin dengan politik...", o:["bebas aktif","blok barat","blok timur","netral total"], a:0 },
+  { lv:5, q:"Perubahan besar dalam produksi pada abad ke-18–19 disebut...", o:["Revolusi Prancis","Revolusi Industri","Revolusi Amerika","Revolusi Rusia"], a:1 },
+  { lv:5, q:"Pandemi global yang mengubah kehidupan sosial, ekonomi, dan pendidikan pada 2020–2022 adalah...", o:["SARS","COVID-19","Flu Spanyol","Ebola"], a:1 },
+  { lv:5, q:"Penjelajahan samudra oleh bangsa Eropa pada abad ke-15–16 bertujuan mencari...", o:["emas","jalur laut menuju Asia untuk rempah","tanah pertanian","budak"], a:1 },
+  { lv:5, q:"Perang Dunia II mempercepat kemerdekaan Indonesia karena...", o:["Jepang kalah dan menyerah","Belanda mengalahkan Jepang","Sekutu mendukung Indonesia","PBB memerintahkan"], a:0 },
+  { lv:5, q:"Gerakan Non-Blok lahir dari kebijakan Indonesia dalam menghadapi...", o:["Perang Dunia I","Perang Dunia II","Perang Dingin","Revolusi Industri"], a:2 },
+  { lv:5, q:"Peristiwa global tidak selalu 'jauh' dari kita karena...", o:["bisa langsung mengubah kehidupan rakyat Indonesia","hanya terjadi di Eropa","tidak berdampak","hanya untuk orang kaya"], a:0 },
+  { lv:5, q:"Contoh analisis global → nasional → lokal adalah...", o:["Perang Dunia II → Jepang menduduki Indonesia → rakyat mengalami romusha","Budi Utomo → Sumpah Pemuda → Proklamasi","Bandung Lautan Api → Palagan Ambarawa → Medan Area","VOC → Banda → Maluku"], a:0 },
+  { lv:5, q:"Revolusi Industri mendorong bangsa Eropa mencari sumber daya dan pasar baru, termasuk ke...", o:["Amerika","Nusantara","Afrika Selatan","Australia"], a:1 },
+  { lv:5, q:"Peristiwa global yang melibatkan banyak negara dan organisasi dunia termasuk...", o:["Bandung Lautan Api","Proklamasi 1945","Perang Dunia II","Palagan Ambarawa"], a:2 },
+  { lv:5, q:"Dampak peristiwa global bagi Indonesia pada masa kolonial terasa melalui...", o:["perubahan politik kolonial dan ekonomi","perubahan cuaca","gempa bumi","gerhana"], a:0 },
+
+  // ══ LEVEL 6 — STUDI KASUS & KETERHUBUNGAN MASA (15) ══
+  { lv:6, q:"Pertempuran Surabaya 1945 terjadi setelah ultimatum dari...", o:["Inggris (Sekutu)","Belanda","Jepang","Portugis"], a:0 },
+  { lv:6, q:"Brigadir Mallaby tewas dalam peristiwa...", o:["Bandung Lautan Api","Pertempuran Surabaya","Palagan Ambarawa","Medan Area"], a:1 },
+  { lv:6, q:"Pertempuran Surabaya 1945 menjadi simbol perlawanan bangsa terhadap penjajahan karena diperingati sebagai...", o:["Hari Kemerdekaan","Hari Pahlawan Nasional","Hari Sumpah Pemuda","Hari Kebangkitan Nasional"], a:1 },
+  { lv:6, q:"Meskipun secara militer Indonesia kalah di Surabaya, perlawanan ini...", o:["memperkuat semangat nasionalisme","melemahkan bangsa","tidak berdampak","membuat Indonesia mundur"], a:0 },
+  { lv:6, q:"Pertempuran Surabaya menarik perhatian dunia internasional karena...", o:["diliput media asing","disiarkan TV Indonesia","dihadiri PBB","disponsori PBB"], a:0 },
+  { lv:6, q:"Jalur Rempah menghubungkan Nusantara dengan...", o:["hanya India","India, Tiongkok, Arab, dan Eropa","hanya Tiongkok","hanya Eropa"], a:1 },
+  { lv:6, q:"Rempah yang hanya tumbuh di Maluku dan Banda adalah...", o:["lada dan kayu manis","cengkih dan pala","jahe dan kunyit","kopi dan teh"], a:1 },
+  { lv:6, q:"VOC didirikan pada tanggal...", o:["20 Maret 1602","17 Agustus 1602","1 Januari 1600","10 November 1602"], a:0 },
+  { lv:6, q:"Tujuan utama pendirian VOC adalah...", o:["mencegah persaingan tidak sehat antar pedagang Belanda","menyebarkan agama","membantu rakyat Nusantara","membangun sekolah"], a:0 },
+  { lv:6, q:"VOC dibubarkan pada tahun...", o:["1602","1619","1799","1945"], a:2 },
+  { lv:6, q:"Politik adu domba VOC antar kerajaan Nusantara disebut...", o:["devide et impera","monopoli","kausalitas","kronologi"], a:0 },
+  { lv:6, q:"VOC menaklukkan Banda pada tahun 1621 untuk memaksakan monopoli...", o:["cengkih","pala","lada","kopi"], a:1 },
+  { lv:6, q:"Keterhubungan masa lampau, kini, dan depan penting karena...", o:["masa lalu memberi pelajaran untuk masa depan","hanya untuk hafalan","tidak berguna","hanya untuk ujian"], a:0 },
+  { lv:6, q:"Contoh keterhubungan masa lampau (VOC monopoli rempah) dengan masa kini adalah...", o:["Indonesia memiliki pelabuhan modern & jalur perdagangan global","Indonesia masih dijajah","Indonesia tidak berdagang","Indonesia menutup pelabuhan"], a:0 },
+  { lv:6, q:"Pertanyaan kritis yang perlu diajukan untuk menganalisis peristiwa adalah...", o:["Siapa pelakunya, kapan, mengapa, dampaknya","Apa warnanya, berapa harganya","Siapa yang menonton","Di mana belinya"], a:0 },
+];
+
+/* ═══════════ STATE ═══════════ */
+const state = {
+  mode: 'menu',
+  level: 1,
+  qIndex: 0,
+  score: 0,
+  hp: 5, maxHp: 5,
+  streak: 0, bestStreak: 0,
+  correctTotal: 0, wrongTotal: 0,
+  timeLeft: 0, timeMax: 25,
+  roundActive: false, locked: false,
+  nextRoundIn: 0,
+  shake: 0, flashRed: 0, flashGreen: 0, flashBlue: 0,
+  toastText: '', toastTimer: 0, toastColor: C.cyan,
+  gameTime: 0,
+  currentQuestion: null,
+  levelQuestions: [],
+  shieldFlash: 0,
+};
+
+const player = {
+  x: 160, y: 360,
+  baseX: 160, baseY: 360,
+  patrolRangeX: 80,
+  patrolRangeY: 150,
+  phaseX: 0, phaseY: 0,
+  enginePulse: 0,
+  recoil: 0,
+  bank: 0,
+  shieldPulse: 0,
+};
+
+const enemies = [];
+const bullets = [];
+const enemyBullets = [];
+const particles = [];
+const shockwaves = [];
+const popups = [];
+const lockOnEffects = [];
+const stars = [];
+const nebulaClouds = [];
+
+/* ═══════════ BACKGROUND ═══════════ */
+function initBackground() {
+  stars.length = 0;
+  for (let i = 0; i < 220; i++) {
+    const layer = i < 140 ? 0 : i < 190 ? 1 : 2;
+    stars.push({
+      x: Math.random() * W, y: Math.random() * H,
+      s: layer === 0 ? Math.random() * 0.9 + 0.35
+        : layer === 1 ? Math.random() * 1.5 + 0.65
+        : Math.random() * 2.3 + 1.1,
+      v: layer === 0 ? 10 : layer === 1 ? 30 : 60,
+      a: layer === 0 ? 0.28 : layer === 1 ? 0.52 : 0.82,
+      twinkle: Math.random() * Math.PI * 2,
+      hue: 185 + Math.random() * 60,
+      drift: (Math.random() - 0.5) * 12,
+    });
+  }
+  nebulaClouds.length = 0;
+  for (let i = 0; i < 6; i++) {
+    nebulaClouds.push({
+      x: Math.random() * W, y: Math.random() * H,
+      r: 180 + Math.random() * 300,
+      v: 4 + Math.random() * 10,
+      hue: 195 + Math.random() * 40,
+      a: 0.05 + Math.random() * 0.06,
+    });
+  }
+}
+
+function drawBackground() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(1, 6, 16, 0.6)');
+  g.addColorStop(0.5, 'rgba(5, 18, 40, 0.5)');
+  g.addColorStop(1, 'rgba(1, 5, 16, 0.65)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  for (const n of nebulaClouds) {
+    const rg = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+    rg.addColorStop(0, `hsla(${n.hue}, 60%, 20%, ${n.a * 1.2})`);
+    rg.addColorStop(0.55, `hsla(${n.hue - 10}, 55%, 12%, ${n.a * 0.5})`);
+    rg.addColorStop(1, 'transparent');
+    ctx.fillStyle = rg;
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  for (const s of stars) {
+    const tw = 0.85 + Math.sin(s.twinkle) * 0.15;
+    ctx.globalAlpha = s.a * tw * 0.7;
+    const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.s * 3);
+    glow.addColorStop(0, `hsla(${s.hue}, 95%, 72%, 0.95)`);
+    glow.addColorStop(0.35, `hsla(${s.hue}, 92%, 55%, 0.45)`);
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.s * 3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = `hsl(${s.hue}, 95%, 80%)`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.s * 0.95, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ═══════════ EFFECTS ═══════════ */
+function explosion(x, y, color, count=30, power=280) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2, sp = Math.random() * power + 40;
+    particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, life: 0.5 + Math.random()*0.9, max: 1.2, size: Math.random()*3.5+1.2, color, glow: Math.random() > 0.5 });
+  }
+}
+function shockwave(x, y, color, maxR=90, life=0.5) { shockwaves.push({ x, y, r: 6, maxR, life, maxLife: life, color }); }
+function popup(x, y, text, color, size=22) { popups.push({ x, y, text, color, size, life: 1.2, maxLife: 1.2, vy: -70 }); }
+function toast(text, color) { state.toastText = text; state.toastColor = color; state.toastTimer = 1.6; }
+
+/* ═══════════ ROUND MANAGEMENT ═══════════ */
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startLevel(level) {
+  state.level = level;
+  state.qIndex = 0;
+  const pool = QUESTIONS.filter(q => q.lv === level);
+  state.levelQuestions = shuffle([...pool]);
+  newRound();
+}
+
+function newRound() {
+  if (state.qIndex >= state.levelQuestions.length) {
+    if (state.level >= TOTAL_LEVELS) { triggerVictory(); return; }
+    toast(`◆ LEVEL ${state.level} SELESAI — LANJUT! ◆`, C.amber);
+    state.nextRoundIn = 2.5;
+    state.roundActive = false;
+    return;
+  }
+  const q = state.levelQuestions[state.qIndex];
+  state.currentQuestion = q;
+
+  const correctIdx = q.a;
+  const wrongIdxs = [0,1,2,3].filter(i => i !== correctIdx);
+  shuffle(wrongIdxs);
+  const chosen = [correctIdx, wrongIdxs[0], wrongIdxs[1]];
+  shuffle(chosen);
+
+  const opts = chosen.map(i => ({ text: q.o[i], correct: i === correctIdx }));
+  const styles = shuffle([0, 1, 2]);
+
+  enemies.length = 0;
+  const startX = W * 0.74;
+  const spacing = (H - 240) / 3;
+  for (let i = 0; i < 3; i++) {
+    const y = 140 + i * spacing + spacing / 2;
+    enemies.push({
+      x: startX + (i % 2) * 30,
+      baseX: startX + (i % 2) * 30,
+      y: -200, baseY: y,
+      text: opts[i].text, correct: opts[i].correct,
+      alive: true, dying: 0, scale: 1, rot: 0,
+      engine: Math.random() * Math.PI * 2,
+      flash: 0, index: i, style: styles[i],
+      panelScale: 0, panelFlash: 0,
+      entering: true, entryT: 0,
+      fleeing: false, fleeVx: 0, fleeVy: 0, fleeRot: 0, spinV: 0,
+      shootCooldown: 1.5 + Math.random() * 2,
+    });
+  }
+
+  state.timeMax = Math.max(18, 30 - state.level * 1.5);
+  state.timeLeft = state.timeMax;
+  state.roundActive = true;
+  state.locked = false;
+  state.shieldFlash = 0;
+}
+
+/* ═══════════ ENEMY FIRE ═══════════ */
+function enemyFire(e) {
+  if (!e.alive || e.dying > 0 || e.fleeing || e.entering) return;
+  const px = player.x, py = player.y;
+  const ex = e.x - 45, ey = e.y;
+  const dx = px - ex, dy = py - ey;
+  const dist = Math.hypot(dx, dy) || 1;
+  const speed = 150 + state.level * 8;
+
+  enemyBullets.push({
+    x: ex, y: ey,
+    vx: (dx / dist) * speed,
+    vy: (dy / dist) * speed,
+    life: 8, max: 8, size: 10,
+    rot: Math.atan2(dy, dx), speed,
+  });
+
+  lockOnEffects.push({
+    type: 'enemyLock',
+    sx: ex, sy: ey, tx: px, ty: py,
+    life: 0.6, maxLife: 0.6,
+  });
+
+  tone(260, 0.15, 'sawtooth', 0.05, 120);
+  tone(180, 0.12, 'square', 0.04);
+  noiseBurst(0.15, 0.05, 1200);
+
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x: ex, y: ey,
+      vx: -60 - Math.random()*100, vy: (Math.random()-0.5)*120,
+      life: 0.18, max: 0.18, size: 2.5 + Math.random()*3,
+      color: C.red, glow: true
+    });
+  }
+}
+
+/* ═══════════ COMBAT ═══════════ */
+function fire(idx) {
+  if (state.mode !== 'playing' || state.locked || !state.roundActive) return;
+  const e = enemies[idx];
+  if (!e || !e.alive || e.dying > 0 || e.fleeing || e.entering) return;
+  state.locked = true;
+  player.recoil = 1;
+
+  const startX = player.x + 50;
+  const startY = player.y;
+  const dx = e.x - startX, dy = e.y - startY;
+  const dist = Math.hypot(dx, dy) || 1;
+
+  bullets.push({
+    x: startX, y: startY,
+    vx: (dx/dist) * 900, vy: (dy/dist) * 900,
+    target: e, life: 2, trail: [],
+  });
+
+  lockOnEffects.push({
+    type: 'playerLock', enemy: e,
+    life: 1.5, maxLife: 1.5, t: 0,
+  });
+
+  tone(1400, 0.06, 'square', 0.035, 800);
+  tone(900, 0.1, 'sawtooth', 0.03, 500, 0.05);
+  noiseBurst(0.1, 0.05, 2000);
+
+  for (let i = 0; i < 8; i++) {
+    particles.push({
+      x: startX, y: startY + (Math.random()-0.5)*20,
+      vx: 200 + Math.random()*200, vy: (Math.random()-0.5)*100,
+      life: 0.15, max: 0.15, size: 3+Math.random()*3,
+      color: C.yellow, glow: true
+    });
+  }
+}
+
+function resolveHit(bullet, enemy) {
+  lockOnEffects.length = 0;
+
+  if (enemy.correct) {
+    state.correctTotal++;
+    state.streak++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    const timeBonus = Math.floor(state.timeLeft * 12);
+    const streakBonus = state.streak >= 2 ? state.streak * 50 : 0;
+    const gained = 100 + timeBonus + streakBonus;
+    state.score += gained;
+
+    explosion(enemy.x, enemy.y, C.teal, 40, 320);
+    explosion(enemy.x, enemy.y, C.cyan, 30, 280);
+    explosion(enemy.x, enemy.y, C.white, 20, 400);
+    shockwave(enemy.x, enemy.y, C.teal, 260, 0.8);
+    shockwave(enemy.x, enemy.y, C.white, 180, 0.6);
+
+    popup(enemy.x, enemy.y - 40, `+${gained}`, C.teal, 28);
+    popup(enemy.x, enemy.y, '✓ BENAR', C.teal, 24);
+
+    let msg = `✓ +${gained}`;
+    if (streakBonus) msg += `  [COMBO ×${state.streak}]`;
+    toast(msg, C.teal);
+
+    tone(880, 0.08, 'square', 0.07);
+    tone(1320, 0.14, 'sine', 0.055, 1980, 0.04);
+    tone(1760, 0.22, 'sine', 0.045, 2640, 0.09);
+    noiseBurst(0.4, 0.12, 1200);
+
+    state.flashGreen = 0.5;
+    state.shake = Math.max(state.shake, 6);
+
+    enemies.forEach(o => {
+      if (o !== enemy && o.alive && o.dying <= 0 && !o.fleeing) {
+        o.fleeing = true;
+        o.fleeVx = 600 + Math.random() * 300;
+        o.fleeVy = (Math.random() - 0.5) * 200;
+        o.spinV = (Math.random() - 0.5) * 3;
+      }
+    });
+
+    enemy.alive = false;
+    enemy.dying = 0.6;
+    enemy.scale = 1;
+
+    state.qIndex++;
+    state.roundActive = false;
+    state.nextRoundIn = 1.5;
+  } else {
+    state.wrongTotal++;
+    state.streak = 0;
+    state.hp--;
+    enemy.flash = 0.4;
+    enemy.fleeing = true;
+    enemy.fleeVx = 500;
+    enemy.fleeVy = (Math.random() - 0.5) * 300;
+    enemy.spinV = (Math.random() - 0.5) * 4;
+
+    explosion(enemy.x, enemy.y, C.pink, 30, 280);
+    shockwave(enemy.x, enemy.y, C.pink, 140, 0.6);
+
+    tone(180, 0.3, 'sawtooth', 0.08, 60);
+    noiseBurst(0.5, 0.16);
+    state.flashRed = 0.7;
+    state.shake = Math.max(state.shake, 10);
+
+    toast('✗ SALAH! -1 Energi', C.pink);
+    popup(enemy.x, enemy.y, '-1 HP', C.pink, 24);
+
+    if (state.hp <= 0) { endGame(); return; }
+
+    const remaining = enemies.filter(o => o.alive && !o.fleeing);
+    if (remaining.length <= 1) {
+      state.roundActive = false;
+      state.nextRoundIn = 1.3;
+      state.qIndex++;
+    } else {
+      state.locked = false;
+    }
+  }
+}
+
+function endGame() {
+  state.mode = 'over';
+  state.roundActive = false;
+  state.locked = true;
+  explosion(player.x, player.y, C.amber, 80, 500);
+  explosion(player.x, player.y, C.white, 40, 600);
+  shockwave(player.x, player.y, C.amber, 240, 0.9);
+  noiseBurst(1.2, 0.2);
+  tone(220, 0.9, 'sawtooth', 0.1, 30);
+}
+
+function triggerVictory() {
+  state.mode = 'victory';
+  state.roundActive = false;
+  state.locked = true;
+  explosion(W/2, H/2, C.teal, 80, 520);
+  explosion(W/2, H/2, C.cyan, 60, 640);
+  shockwave(W/2, H/2, C.teal, 420, 1.2);
+  state.flashGreen = 1.0;
+  state.shake = 12;
+  tone(660, 0.15, 'triangle', 0.08);
+  tone(880, 0.2, 'triangle', 0.08, null, 0.12);
+  tone(1320, 0.3, 'sine', 0.07, null, 0.26);
+}
+
+/* ═══════════ UPDATE ═══════════ */
+function update(dt) {
+  state.gameTime += dt;
+
+  for (const s of stars) {
+    s.y += s.v * dt;
+    s.x += s.drift * dt;
+    s.twinkle += dt * 3;
+    if (s.y > H + 4) { s.y = -4; s.x = Math.random() * W; }
+    if (s.x < -8) s.x = W + 8;
+    if (s.x > W + 8) s.x = -8;
+  }
+  for (const n of nebulaClouds) {
+    n.y += n.v * dt * 0.3;
+    if (n.y - n.r > H) { n.y = -n.r; n.x = Math.random() * W; }
+  }
+
+  player.phaseX += dt * 0.5;
+  player.phaseY += dt * 0.7;
+  player.x = player.baseX + Math.sin(player.phaseX) * player.patrolRangeX;
+  player.y = player.baseY + Math.sin(player.phaseY) * player.patrolRangeY;
+
+  const vx = Math.cos(player.phaseX) * 0.5;
+  player.bank = lerp(player.bank, vx * 0.2, Math.min(1, dt * 4));
+
+  player.enginePulse += dt * 30;
+  player.shieldPulse += dt * 3;
+  if (player.recoil > 0) player.recoil = Math.max(0, player.recoil - dt * 4);
+
+  if (state.shake > 0) state.shake = Math.max(0, state.shake - dt * 70);
+  if (state.flashRed > 0) state.flashRed = Math.max(0, state.flashRed - dt * 1.5);
+  if (state.flashGreen > 0) state.flashGreen = Math.max(0, state.flashGreen - dt * 1.8);
+  if (state.flashBlue > 0) state.flashBlue = Math.max(0, state.flashBlue - dt * 1.5);
+  if (state.shieldFlash > 0) state.shieldFlash = Math.max(0, state.shieldFlash - dt * 3);
+  if (state.toastTimer > 0) state.toastTimer -= dt;
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.vx *= 0.955; p.vy *= 0.955; p.vy += 55 * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  for (let i = shockwaves.length - 1; i >= 0; i--) {
+    const sw = shockwaves[i];
+    sw.life -= dt;
+    sw.r = lerp(6, sw.maxR, 1 - sw.life / sw.maxLife);
+    if (sw.life <= 0) shockwaves.splice(i, 1);
+  }
+  for (let i = popups.length - 1; i >= 0; i--) {
+    const p = popups[i];
+    p.y += p.vy * dt; p.vy *= 0.95; p.life -= dt;
+    if (p.life <= 0) popups.splice(i, 1);
+  }
+  for (let i = lockOnEffects.length - 1; i >= 0; i--) {
+    const lo = lockOnEffects[i];
+    if (lo.type === 'playerLock') {
+      if (!lo.enemy || !lo.enemy.alive || lo.enemy.dying > 0) { lockOnEffects.splice(i, 1); continue; }
+    }
+    lo.life -= dt;
+    if (lo.life <= 0) lockOnEffects.splice(i, 1);
+  }
+
+  if (state.mode !== 'playing') return;
+
+  if (state.roundActive && !state.locked) {
+    state.timeLeft -= dt;
+    if (state.timeLeft <= 0) {
+      state.timeLeft = 0;
+      state.hp--;
+      toast('💥 WAKTU HABIS! -1 Energi', C.pink);
+      state.flashRed = 1.0;
+      state.shake = 14;
+      tone(180, 1.0, 'sawtooth', 0.15, 30);
+      noiseBurst(1.2, 0.2);
+      if (state.hp <= 0) { endGame(); return; }
+      state.qIndex++;
+      state.roundActive = false;
+      state.locked = true;
+      state.nextRoundIn = 1.8;
+      enemies.forEach(o => {
+        if (o.alive && !o.fleeing) {
+          o.fleeing = true;
+          o.fleeVx = 500 + Math.random() * 300;
+          o.fleeVy = (Math.random() - 0.5) * 300;
+          o.spinV = (Math.random() - 0.5) * 3;
+        }
+      });
+    }
+  }
+
+  for (const e of enemies) {
+    e.engine += dt * 8;
+    if (e.panelFlash > 0) e.panelFlash -= dt;
+    if (e.flash > 0) e.flash -= dt;
+
+    if (e.entering) {
+      e.entryT += dt;
+      const t = Math.min(1, e.entryT / 1.2);
+      const ease = 1 - Math.pow(1 - t, 3);
+      e.y = lerp(-200, e.baseY, ease);
+      if (t >= 1) { e.entering = false; e.panelScale = 1; }
+      continue;
+    }
+
+    if (e.fleeing) {
+      e.fleeVy += 200 * dt;
+      e.x += e.fleeVx * dt;
+      e.y += e.fleeVy * dt;
+      e.rot += e.spinV * dt;
+      if (e.x > W + 300) e.alive = false;
+      continue;
+    }
+
+    if (e.dying > 0) {
+      e.dying -= dt;
+      e.scale = Math.max(0, e.dying / 0.6);
+      e.rot += dt * 6;
+      if (e.dying <= 0) e.alive = false;
+      continue;
+    }
+
+    if (e.alive && !e.entering && !e.fleeing) {
+      e.y = e.baseY + Math.sin(state.gameTime * 1.5 + e.index) * 8;
+      e.x = e.baseX + Math.sin(state.gameTime * 1.2 + e.index * 2) * 6;
+
+      if (state.roundActive && !state.locked) {
+        e.shootCooldown -= dt;
+        if (e.shootCooldown <= 0) {
+          enemyFire(e);
+          e.shootCooldown = 3.0 + Math.random() * 2.5 - state.level * 0.15;
+          if (e.shootCooldown < 1.5) e.shootCooldown = 1.5;
+        }
+      }
+    }
+  }
+
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    const target = b.target;
+    if (!target || (!target.alive && target.dying <= 0 && !target.fleeing)) {
+      bullets.splice(i, 1);
+      continue;
+    }
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    b.life -= dt;
+    b.trail.push({ x: b.x, y: b.y, life: 0.3 });
+    if (b.trail.length > 8) b.trail.shift();
+
+    const dx = target.x - b.x;
+    const dy = target.y - b.y;
+    if (Math.hypot(dx, dy) < 55) {
+      bullets.splice(i, 1);
+      resolveHit(b, target);
+    } else if (b.life <= 0 || b.x > W + 100) {
+      bullets.splice(i, 1);
+    }
+  }
+
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    const eb = enemyBullets[i];
+    eb.x += eb.vx * dt;
+    eb.y += eb.vy * dt;
+    eb.life -= dt;
+    eb.rot = Math.atan2(eb.vy, eb.vx);
+
+    if (Math.random() < 0.7) {
+      particles.push({
+        x: eb.x, y: eb.y,
+        vx: (Math.random() - 0.5) * 25,
+        vy: (Math.random() - 0.5) * 25,
+        life: 0.4, max: 0.4,
+        size: 3 + Math.random() * 4,
+        color: C.red, glow: true
+      });
+    }
+
+    const pdx = player.x - eb.x;
+    const pdy = player.y - eb.y;
+    const pdist = Math.hypot(pdx, pdy);
+
+    if (pdist < SHIELD_RADIUS) {
+      explosion(eb.x, eb.y, C.green, 24, 240);
+      explosion(eb.x, eb.y, C.greenBright, 16, 180);
+      shockwave(eb.x, eb.y, C.green, 110, 0.5);
+      shockwave(eb.x, eb.y, C.lime, 80, 0.4);
+      state.shieldFlash = 1.0;
+
+      for (let k = 0; k < 12; k++) {
+        particles.push({
+          x: eb.x, y: eb.y,
+          vx: (Math.random()-0.5)*280, vy: (Math.random()-0.5)*280,
+          life: 0.4+Math.random()*0.4, max: 0.8,
+          size: 2+Math.random()*3, color: C.greenBright, glow: true
+        });
+      }
+
+      tone(520, 0.12, 'square', 0.06, 240);
+      tone(280, 0.18, 'sawtooth', 0.05, 120);
+      noiseBurst(0.25, 0.1, 1500);
+      state.shake = Math.max(state.shake, 4);
+      enemyBullets.splice(i, 1);
+      continue;
+    }
+
+    if (eb.x < -100 || eb.x > W + 100 || eb.y < -100 || eb.y > H + 100) {
+      enemyBullets.splice(i, 1);
+    } else if (eb.life <= 0) {
+      enemyBullets.splice(i, 1);
+    }
+  }
+
+  if (state.nextRoundIn > 0) {
+    state.nextRoundIn -= dt;
+    if (state.nextRoundIn <= 0) {
+      if (state.hp > 0 && state.mode === 'playing') {
+        if (state.qIndex >= state.levelQuestions.length) {
+          if (state.level < TOTAL_LEVELS) {
+            startLevel(state.level + 1);
+          } else {
+            triggerVictory();
+          }
+        } else {
+          newRound();
+        }
+      }
+    }
+  }
+}
+
+/* ═══════════ RENDER ═══════════ */
+function roundRect(c, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y, x + w, y + h, r);
+  c.arcTo(x + w, y + h, x, y + h, r);
+  c.arcTo(x, y + h, x, y, r);
+  c.arcTo(x, y, x + w, y, r);
+  c.closePath();
+}
+
+function wrapText(text, maxWidth, font) {
+  const prev = ctx.font; ctx.font = font;
+  const words = text.split(' '); const lines = []; let line = '';
+  for (const w of words) {
+    const test = line ? line + ' ' + w : w;
+    if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+    else line = test;
+  }
+  if (line) lines.push(line);
+  ctx.font = prev;
+  return lines;
+}
+
+/* ── PLAYER MIRAGE (kiri) ── */
+function drawPlayer() {
+  if (state.mode === 'over' || state.mode === 'victory') return;
+  const bob = Math.sin(state.gameTime * 2.4) * 2.5;
+  const px = player.x;
+  const py = player.y + bob;
+  const recoil = player.recoil * 8;
+
+  const pulse = 0.5 + Math.sin(player.shieldPulse * 2) * 0.5;
+  const shieldAlpha = 0.5 + pulse * 0.25 + state.shieldFlash * 0.6;
+  const shieldR = SHIELD_RADIUS + pulse * 3;
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  const sg = ctx.createRadialGradient(px, py, shieldR * 0.55, px, py, shieldR);
+  sg.addColorStop(0, 'transparent');
+  sg.addColorStop(0.65, hex2rgba(C.green, 0.15 * shieldAlpha));
+  sg.addColorStop(0.85, hex2rgba(C.green, 0.45 * shieldAlpha));
+  sg.addColorStop(1, hex2rgba(C.greenBright, 0.85 * shieldAlpha));
+  ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.arc(px, py, shieldR, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = hex2rgba(C.greenBright, shieldAlpha);
+  ctx.lineWidth = 2.8 + pulse * 1.5;
+  ctx.shadowColor = C.green;
+  ctx.shadowBlur = 20;
+  ctx.beginPath(); ctx.arc(px, py, shieldR, 0, Math.PI * 2); ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.globalAlpha = shieldAlpha * 0.4;
+  ctx.strokeStyle = hex2rgba(C.lime, 0.9);
+  ctx.lineWidth = 1;
+  const hexR = shieldR * 0.75;
+  for (let i = 0; i < 6; i++) {
+    const ang1 = (i / 6) * Math.PI * 2 + state.gameTime * 0.5;
+    const ang2 = ((i + 1) / 6) * Math.PI * 2 + state.gameTime * 0.5;
+    ctx.beginPath();
+    ctx.moveTo(px + Math.cos(ang1) * hexR * 0.3, py + Math.sin(ang1) * hexR * 0.3);
+    ctx.lineTo(px + Math.cos(ang1) * hexR, py + Math.sin(ang1) * hexR);
+    ctx.lineTo(px + Math.cos(ang2) * hexR, py + Math.sin(ang2) * hexR);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // MIRAGE AIRCRAFT
+  ctx.save();
+  ctx.translate(px - recoil, py);
+  ctx.rotate(player.bank);
+
+  const flameLen = 55 + Math.sin(player.enginePulse) * 14;
+  const eg1 = ctx.createLinearGradient(-32, 0, -32 - flameLen, 0);
+  eg1.addColorStop(0, hex2rgba(C.white, 1));
+  eg1.addColorStop(0.15, hex2rgba(C.cyan, 1));
+  eg1.addColorStop(0.45, hex2rgba(C.blue, 0.85));
+  eg1.addColorStop(0.75, hex2rgba(C.purple, 0.4));
+  eg1.addColorStop(1, 'transparent');
+  ctx.fillStyle = eg1;
+  ctx.beginPath();
+  ctx.moveTo(-32, -11);
+  ctx.quadraticCurveTo(-32 - flameLen * 0.5, 0, -32 - flameLen, 0);
+  ctx.quadraticCurveTo(-32 - flameLen * 0.5, 0, -32, 11);
+  ctx.closePath();
+  ctx.fill();
+
+  const eg2 = ctx.createLinearGradient(-32, 0, -32 - flameLen * 0.6, 0);
+  eg2.addColorStop(0, 'rgba(255,255,255,1)');
+  eg2.addColorStop(0.5, 'rgba(200,240,255,0.9)');
+  eg2.addColorStop(1, 'transparent');
+  ctx.fillStyle = eg2;
+  ctx.beginPath();
+  ctx.moveTo(-32, -5);
+  ctx.quadraticCurveTo(-32 - flameLen * 0.3, 0, -32 - flameLen * 0.6, 0);
+  ctx.quadraticCurveTo(-32 - flameLen * 0.3, 0, -32, 5);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.ellipse(-32, 0, 4, 10, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#202830';
+  ctx.fill();
+  ctx.strokeStyle = C.cyan;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(28, side * 4);
+    ctx.lineTo(-30, side * 42);
+    ctx.lineTo(-32, side * 10);
+    ctx.closePath();
+    const wingG = ctx.createLinearGradient(28, side * 4, -30, side * 42);
+    wingG.addColorStop(0, '#4a90c8');
+    wingG.addColorStop(0.4, '#2a5a8a');
+    wingG.addColorStop(0.85, '#0a1a30');
+    wingG.addColorStop(1, '#051020');
+    ctx.fillStyle = wingG;
+    ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.cyan, 0.85);
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+
+    const tipX = -30, tipY = side * 42;
+    ctx.beginPath();
+    ctx.ellipse(tipX + 4, tipY + side * 2, 8, 3, side * 0.4, 0, Math.PI * 2);
+    const tipG = ctx.createLinearGradient(tipX, tipY, tipX + 12, tipY);
+    tipG.addColorStop(0, '#2a3a4a');
+    tipG.addColorStop(0.5, '#8090a0');
+    tipG.addColorStop(1, '#1a2a3a');
+    ctx.fillStyle = tipG;
+    ctx.fill();
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(58, 0);
+  ctx.bezierCurveTo(50, -6, 40, -10, 30, -12);
+  ctx.lineTo(10, -14);
+  ctx.lineTo(-15, -13);
+  ctx.lineTo(-28, -10);
+  ctx.lineTo(-32, -8);
+  ctx.lineTo(-32, 8);
+  ctx.lineTo(-28, 10);
+  ctx.lineTo(-15, 13);
+  ctx.lineTo(10, 14);
+  ctx.lineTo(30, 12);
+  ctx.bezierCurveTo(40, 10, 50, 6, 58, 0);
+  ctx.closePath();
+  const bodyG = ctx.createLinearGradient(0, -14, 0, 14);
+  bodyG.addColorStop(0, '#e8f4ff');
+  bodyG.addColorStop(0.15, '#a8d8ff');
+  bodyG.addColorStop(0.4, '#4a90c8');
+  bodyG.addColorStop(0.7, '#1e4a7a');
+  bodyG.addColorStop(0.9, '#0a2240');
+  bodyG.addColorStop(1, '#030a18');
+  ctx.fillStyle = bodyG;
+  ctx.fill();
+  ctx.strokeStyle = C.cyan;
+  ctx.lineWidth = 1.8;
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(200,240,255,0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(55, 0);
+  ctx.lineTo(-30, 0);
+  ctx.stroke();
+
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(28, side * 10);
+    ctx.lineTo(20, side * 12);
+    ctx.lineTo(12, side * 12);
+    ctx.lineTo(10, side * 10);
+    ctx.closePath();
+    ctx.fillStyle = '#0a1520';
+    ctx.fill();
+    ctx.strokeStyle = '#60a0d0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.ellipse(28, 0, 14, 6, 0, 0, Math.PI * 2);
+  const cg = ctx.createRadialGradient(24, -2, 0, 28, 0, 14);
+  cg.addColorStop(0, 'rgba(220, 250, 255, 1)');
+  cg.addColorStop(0.35, 'rgba(120, 200, 240, 0.95)');
+  cg.addColorStop(0.7, 'rgba(40, 100, 160, 0.95)');
+  cg.addColorStop(1, 'rgba(10, 30, 60, 0.98)');
+  ctx.fillStyle = cg;
+  ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.9);
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(-18, -3);
+  ctx.lineTo(-28, -3);
+  ctx.lineTo(-28, -22);
+  ctx.lineTo(-22, -22);
+  ctx.lineTo(-16, -3);
+  ctx.closePath();
+  const finG = ctx.createLinearGradient(-28, -22, -16, 0);
+  finG.addColorStop(0, '#1e4a7a');
+  finG.addColorStop(1, '#0a2240');
+  ctx.fillStyle = finG;
+  ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.85);
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  ctx.fillStyle = C.red;
+  ctx.fillRect(-27, -21, 3, 2);
+  ctx.fillStyle = C.white;
+  ctx.fillRect(-24, -21, 3, 2);
+  ctx.fillStyle = C.blue;
+  ctx.fillRect(-21, -21, 3, 2);
+
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(-26, side * 6);
+    ctx.lineTo(-38, side * 16);
+    ctx.lineTo(-40, side * 14);
+    ctx.lineTo(-30, side * 6);
+    ctx.closePath();
+    ctx.fillStyle = '#1e4a7a';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,200,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(58, 0);
+  ctx.lineTo(62, -2);
+  ctx.lineTo(62, 2);
+  ctx.closePath();
+  ctx.fillStyle = C.cyan;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(62, 0, 2, 0, Math.PI * 2);
+  ctx.fillStyle = C.white;
+  ctx.shadowColor = C.cyan;
+  ctx.shadowBlur = 12;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  for (const side of [-1, 1]) {
+    ctx.fillStyle = '#2a3a4a';
+    ctx.fillRect(34, side * 7 - 1.5, 16, 3);
+    ctx.strokeStyle = 'rgba(0,200,255,0.5)';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(34, side * 7 - 1.5, 16, 3);
+  }
+
+  ctx.restore();
+}
+
+/* ═══ DRAW ENEMY — 3 SUKHOI VARIAN ═══
+   style 0: Su-27 Flanker — biru langit, twin-tail, khas Rusia
+   style 1: Su-34 Fullback — hijau-olive, kokpit tandem side-by-side, bomber
+   style 2: Su-57 Felon — abu gelap siluman, 5th gen, sleek
+   ═══════════════════════════════════════ */
+function drawEnemy(e) {
+  if (!e.alive && e.dying <= 0) return;
+  const sc = e.dying > 0 ? e.scale : 1;
+  if (sc <= 0.01) return;
+  const isHit = e.flash > 0;
+  const isCharging = e.shootCooldown < 0.6 && e.shootCooldown > 0;
+
+  ctx.save();
+  ctx.translate(e.x, e.y);
+  ctx.rotate(e.rot);
+  ctx.scale(sc, sc);
+
+  if (isCharging) {
+    const warnPulse = 0.5 + Math.sin(state.gameTime * 30) * 0.5;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const wg = ctx.createRadialGradient(-45, 0, 0, -45, 0, 50);
+    wg.addColorStop(0, hex2rgba(C.red, 0.7 * warnPulse));
+    wg.addColorStop(0.5, hex2rgba(C.orange, 0.3 * warnPulse));
+    wg.addColorStop(1, 'transparent');
+    ctx.fillStyle = wg;
+    ctx.beginPath(); ctx.arc(-45, 0, 50, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  if (e.style === 0) drawSu27(e, isHit);
+  else if (e.style === 1) drawSu34(e, isHit);
+  else drawSu57(e, isHit);
+
+  ctx.restore();
+
+  if (!e.fleeing && !e.entering) {
+    const br = 16;
+    ctx.save();
+    ctx.beginPath(); ctx.arc(e.x - 60, e.y - 20, br, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(10,20,40,0.96)'; ctx.fill();
+    ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.4; ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = `bold 16px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(String(e.index + 1), e.x - 60, e.y - 19);
+    ctx.restore();
+  }
+}
+
+/* ═══ SU-27 FLANKER — biru langit, twin-tail, khas Rusia ═══ */
+function drawSu27(e, isHit) {
+  const flick = 0.75 + Math.sin(e.engine) * 0.25;
+  const flameLen = 40 * flick;
+  // Twin engine flame
+  for (const ey of [-8, 8]) {
+    const fg = ctx.createLinearGradient(26, ey, 26 + flameLen, ey);
+    fg.addColorStop(0, 'rgba(180,220,255,1)');
+    fg.addColorStop(0.3, 'rgba(80,160,255,1)');
+    fg.addColorStop(0.7, 'rgba(40,80,200,0.6)');
+    fg.addColorStop(1, 'transparent');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.moveTo(24, ey - 5);
+    ctx.quadraticCurveTo(24 + flameLen * 0.5, ey, 24 + flameLen, ey);
+    ctx.quadraticCurveTo(24 + flameLen * 0.5, ey, 24, ey + 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Twin nozzles
+  for (const ey of [-8, 8]) {
+    ctx.beginPath();
+    ctx.ellipse(24, ey, 3, 6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a2a3a';
+    ctx.fill();
+    ctx.strokeStyle = '#60a0d0';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Wings — swept-back, khas Flanker
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(5, side * 5);
+    ctx.lineTo(10, side * 30);
+    ctx.lineTo(20, side * 40);
+    ctx.lineTo(26, side * 38);
+    ctx.lineTo(22, side * 16);
+    ctx.lineTo(14, side * 8);
+    ctx.closePath();
+    const wingG = ctx.createLinearGradient(5, side * 5, 26, side * 40);
+    wingG.addColorStop(0, '#80b8e8');
+    wingG.addColorStop(0.4, '#3a78c0');
+    wingG.addColorStop(0.85, '#1a3a70');
+    wingG.addColorStop(1, '#0a1a40');
+    ctx.fillStyle = wingG;
+    ctx.fill();
+    ctx.strokeStyle = '#0a1a30';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Wing pylon dengan rudal
+    ctx.beginPath();
+    ctx.ellipse(22, side * 34, 5, 2, side * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a2a3a';
+    ctx.fill();
+    ctx.strokeStyle = '#80b8e8';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  // Fuselage — khas Flanker (berotot)
+  ctx.beginPath();
+  ctx.moveTo(-48, 0);
+  ctx.bezierCurveTo(-42, -10, -28, -14, -12, -14);
+  ctx.lineTo(8, -12);
+  ctx.lineTo(20, -8);
+  ctx.lineTo(26, 0);
+  ctx.lineTo(20, 8);
+  ctx.lineTo(8, 12);
+  ctx.lineTo(-12, 14);
+  ctx.bezierCurveTo(-28, 14, -42, 10, -48, 0);
+  ctx.closePath();
+  const bodyG = ctx.createLinearGradient(0, -14, 0, 14);
+  if (isHit) {
+    bodyG.addColorStop(0, '#e0f0ff'); bodyG.addColorStop(0.5, '#80c0ff');
+    bodyG.addColorStop(1, '#1a3a70');
+  } else {
+    bodyG.addColorStop(0, '#c0e0ff');
+    bodyG.addColorStop(0.3, '#5a9ad0');
+    bodyG.addColorStop(0.7, '#2a5a90');
+    bodyG.addColorStop(1, '#0a1a40');
+  }
+  ctx.fillStyle = bodyG;
+  ctx.fill();
+  ctx.strokeStyle = '#0a1a30';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  // Cockpit
+  ctx.beginPath();
+  ctx.ellipse(-12, 0, 11, 4.5, 0, 0, Math.PI * 2);
+  const cg = ctx.createRadialGradient(-14, -2, 0, -12, 0, 11);
+  cg.addColorStop(0, 'rgba(240,250,255,1)');
+  cg.addColorStop(0.5, 'rgba(140,200,240,0.95)');
+  cg.addColorStop(1, 'rgba(20,50,80,0.98)');
+  ctx.fillStyle = cg;
+  ctx.fill();
+  ctx.strokeStyle = '#0a1a30';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // ═══ TWIN TAIL — ciri khas Su-27 ═══
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(-20, side * 8);
+    ctx.lineTo(-30, side * 10);
+    ctx.lineTo(-30, side * 24);
+    ctx.lineTo(-24, side * 24);
+    ctx.lineTo(-18, side * 8);
+    ctx.closePath();
+    const finG = ctx.createLinearGradient(-30, side * 24, -18, side * 8);
+    finG.addColorStop(0, '#2a5a90');
+    finG.addColorStop(1, '#0a1a40');
+    ctx.fillStyle = finG;
+    ctx.fill();
+    ctx.strokeStyle = '#0a1a30';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Nose
+  ctx.beginPath();
+  ctx.moveTo(-48, 0);
+  ctx.lineTo(-54, -2);
+  ctx.lineTo(-54, 2);
+  ctx.closePath();
+  ctx.fillStyle = '#5a9ad0';
+  ctx.fill();
+
+  // Red star marking (khas Rusia)
+  ctx.fillStyle = '#c02020';
+  ctx.beginPath();
+  ctx.arc(-35, 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+}
+
+/* ═══ SU-34 FULLBACK — hijau-olive, kokpit tandem, bomber ═══ */
+function drawSu34(e, isHit) {
+  const flick = 0.75 + Math.sin(e.engine) * 0.25;
+  const flameLen = 45 * flick;
+  for (const ey of [-8, 8]) {
+    const fg = ctx.createLinearGradient(26, ey, 26 + flameLen, ey);
+    fg.addColorStop(0, 'rgba(220,255,180,1)');
+    fg.addColorStop(0.3, 'rgba(180,220,80,1)');
+    fg.addColorStop(0.7, 'rgba(100,140,20,0.6)');
+    fg.addColorStop(1, 'transparent');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.moveTo(24, ey - 6);
+    ctx.quadraticCurveTo(24 + flameLen * 0.5, ey, 24 + flameLen, ey);
+    ctx.quadraticCurveTo(24 + flameLen * 0.5, ey, 24, ey + 6);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  for (const ey of [-8, 8]) {
+    ctx.beginPath();
+    ctx.ellipse(24, ey, 4, 7, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#2a2a1a';
+    ctx.fill();
+    ctx.strokeStyle = '#a0c060';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Wings — sayap lebar bomber
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(8, side * 6);
+    ctx.lineTo(18, side * 34);
+    ctx.lineTo(28, side * 42);
+    ctx.lineTo(32, side * 38);
+    ctx.lineTo(24, side * 18);
+    ctx.lineTo(14, side * 10);
+    ctx.closePath();
+    const wingG = ctx.createLinearGradient(8, side * 6, 32, side * 42);
+    wingG.addColorStop(0, '#c0d090');
+    wingG.addColorStop(0.4, '#7a9040');
+    wingG.addColorStop(0.85, '#405020');
+    wingG.addColorStop(1, '#202a10');
+    ctx.fillStyle = wingG;
+    ctx.fill();
+    ctx.strokeStyle = '#101808';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Bom pylon
+    ctx.beginPath();
+    ctx.ellipse(22, side * 30, 7, 3, side * 0.2, 0, Math.PI * 2);
+    ctx.fillStyle = '#2a3010';
+    ctx.fill();
+    ctx.strokeStyle = '#a0c060';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  }
+
+  // Fuselage — gemuk bomber (khas Su-34 dengan kokpit lebar)
+  ctx.beginPath();
+  ctx.moveTo(-50, 0);
+  ctx.bezierCurveTo(-44, -12, -30, -16, -14, -16);
+  ctx.lineTo(10, -14);
+  ctx.lineTo(22, -8);
+  ctx.lineTo(28, 0);
+  ctx.lineTo(22, 8);
+  ctx.lineTo(10, 14);
+  ctx.lineTo(-14, 16);
+  ctx.bezierCurveTo(-30, 16, -44, 12, -50, 0);
+  ctx.closePath();
+  const bodyG = ctx.createLinearGradient(0, -16, 0, 16);
+  if (isHit) {
+    bodyG.addColorStop(0, '#e0f0b0'); bodyG.addColorStop(0.5, '#b0c070');
+    bodyG.addColorStop(1, '#405020');
+  } else {
+    bodyG.addColorStop(0, '#c0d090');
+    bodyG.addColorStop(0.3, '#8a9a50');
+    bodyG.addColorStop(0.7, '#5a6a30');
+    bodyG.addColorStop(1, '#202a10');
+  }
+  ctx.fillStyle = bodyG;
+  ctx.fill();
+  ctx.strokeStyle = '#101808';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+
+  // ═══ KOKPIT LEBAR (side-by-side, ciri khas Su-34) ═══
+  ctx.beginPath();
+  ctx.ellipse(-14, 0, 14, 6, 0, 0, Math.PI * 2);
+  const cg = ctx.createRadialGradient(-16, -2, 0, -14, 0, 14);
+  cg.addColorStop(0, 'rgba(240,255,200,1)');
+  cg.addColorStop(0.5, 'rgba(180,220,80,0.95)');
+  cg.addColorStop(1, 'rgba(30,50,10,0.98)');
+  ctx.fillStyle = cg;
+  ctx.fill();
+  ctx.strokeStyle = '#101808';
+  ctx.lineWidth = 1.3;
+  ctx.stroke();
+
+  // Twin tail
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(-22, side * 8);
+    ctx.lineTo(-32, side * 10);
+    ctx.lineTo(-32, side * 26);
+    ctx.lineTo(-26, side * 26);
+    ctx.lineTo(-20, side * 8);
+    ctx.closePath();
+    ctx.fillStyle = '#5a6a30';
+    ctx.fill();
+    ctx.strokeStyle = '#101808';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Nose
+  ctx.beginPath();
+  ctx.moveTo(-50, 0);
+  ctx.lineTo(-56, -2);
+  ctx.lineTo(-56, 2);
+  ctx.closePath();
+  ctx.fillStyle = '#8a9a50';
+  ctx.fill();
+
+  // Red star marking
+  ctx.fillStyle = '#c02020';
+  ctx.beginPath();
+  ctx.arc(-38, 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+}
+
+/* ═══ SU-57 FELON — abu gelap siluman, 5th gen ═══ */
+function drawSu57(e, isHit) {
+  const flick = 0.75 + Math.sin(e.engine) * 0.25;
+  const flameLen = 42 * flick;
+  for (const ey of [-7, 7]) {
+    const fg = ctx.createLinearGradient(26, ey, 26 + flameLen, ey);
+    fg.addColorStop(0, 'rgba(220,220,230,1)');
+    fg.addColorStop(0.3, 'rgba(140,140,160,1)');
+    fg.addColorStop(0.7, 'rgba(60,60,80,0.6)');
+    fg.addColorStop(1, 'transparent');
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.moveTo(24, ey - 5);
+    ctx.quadraticCurveTo(24 + flameLen * 0.5, ey, 24 + flameLen, ey);
+    ctx.quadraticCurveTo(24 + flameLen * 0.5, ey, 24, ey + 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  for (const ey of [-7, 7]) {
+    ctx.beginPath();
+    ctx.ellipse(24, ey, 3, 6, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#1a1a20';
+    ctx.fill();
+    ctx.strokeStyle = '#606070';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Wings — sleek blended, siluman
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(8, side * 5);
+    ctx.lineTo(16, side * 28);
+    ctx.lineTo(26, side * 36);
+    ctx.lineTo(30, side * 34);
+    ctx.lineTo(24, side * 14);
+    ctx.lineTo(14, side * 8);
+    ctx.closePath();
+    const wingG = ctx.createLinearGradient(8, side * 5, 30, side * 36);
+    wingG.addColorStop(0, '#a0a0b0');
+    wingG.addColorStop(0.4, '#606070');
+    wingG.addColorStop(0.85, '#303040');
+    wingG.addColorStop(1, '#101018');
+    ctx.fillStyle = wingG;
+    ctx.fill();
+    ctx.strokeStyle = '#08080c';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+
+    // Glowing edge
+    ctx.strokeStyle = isHit ? '#ff80a0' : '#a0c0ff';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(8, side * 5);
+    ctx.lineTo(16, side * 28);
+    ctx.lineTo(26, side * 36);
+    ctx.stroke();
+  }
+
+  // Fuselage — sleek siluman
+  ctx.beginPath();
+  ctx.moveTo(-48, 0);
+  ctx.bezierCurveTo(-42, -8, -28, -12, -12, -13);
+  ctx.lineTo(10, -11);
+  ctx.lineTo(22, -7);
+  ctx.lineTo(28, 0);
+  ctx.lineTo(22, 7);
+  ctx.lineTo(10, 11);
+  ctx.lineTo(-12, 13);
+  ctx.bezierCurveTo(-28, 12, -42, 8, -48, 0);
+  ctx.closePath();
+  const bodyG = ctx.createLinearGradient(0, -13, 0, 13);
+  if (isHit) {
+    bodyG.addColorStop(0, '#e0e0f0'); bodyG.addColorStop(0.5, '#a0a0b0');
+    bodyG.addColorStop(1, '#303040');
+  } else {
+    bodyG.addColorStop(0, '#a0a0b0');
+    bodyG.addColorStop(0.3, '#606070');
+    bodyG.addColorStop(0.7, '#404048');
+    bodyG.addColorStop(1, '#101018');
+  }
+  ctx.fillStyle = bodyG;
+  ctx.fill();
+  ctx.strokeStyle = '#08080c';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Cockpit — sleek modern
+  ctx.beginPath();
+  ctx.ellipse(-12, 0, 12, 5, 0, 0, Math.PI * 2);
+  const cg = ctx.createRadialGradient(-14, -2, 0, -12, 0, 12);
+  cg.addColorStop(0, 'rgba(240,240,255,1)');
+  cg.addColorStop(0.5, 'rgba(160,180,220,0.95)');
+  cg.addColorStop(1, 'rgba(20,20,40,0.98)');
+  ctx.fillStyle = cg;
+  ctx.fill();
+  ctx.strokeStyle = '#08080c';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // Twin canted tail (siluman)
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(-20, side * 7);
+    ctx.lineTo(-28, side * 10);
+    ctx.lineTo(-28, side * 22);
+    ctx.lineTo(-22, side * 22);
+    ctx.lineTo(-16, side * 7);
+    ctx.closePath();
+    const finG = ctx.createLinearGradient(-28, side * 22, -16, side * 7);
+    finG.addColorStop(0, '#606070');
+    finG.addColorStop(1, '#101018');
+    ctx.fillStyle = finG;
+    ctx.fill();
+    ctx.strokeStyle = '#08080c';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Nose
+  ctx.beginPath();
+  ctx.moveTo(-48, 0);
+  ctx.lineTo(-54, -2);
+  ctx.lineTo(-54, 2);
+  ctx.closePath();
+  ctx.fillStyle = '#707080';
+  ctx.fill();
+
+  // Glowing center line (siluman effect)
+  ctx.strokeStyle = hex2rgba('#a0c0ff', 0.5 + Math.sin(state.gameTime * 3) * 0.2);
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(-42, 0);
+  ctx.lineTo(20, 0);
+  ctx.stroke();
+}
+
+/* ── PANEL JAWABAN ── */
+function drawEnemyPanel(e) {
+  if (e.fleeing) return;
+  if (!e.alive && e.dying <= 0) return;
+  if (e.entering) return;
+
+  const panelW = Math.min(W * 0.20, 260);
+  const panelH = 82;
+  const cx = e.x;
+  const cy = e.y + 58;
+  const x = cx - panelW / 2;
+  const y = cy - panelH / 2;
+
+  const isHit = e.flash > 0;
+  const panelColor = isHit ? C.pink : C.cyan;
+
+  ctx.save();
+  roundRect(ctx, x, y, panelW, panelH, 10);
+  const g = ctx.createLinearGradient(x, y, x, y + panelH);
+  if (isHit) {
+    g.addColorStop(0, 'rgba(60, 10, 35, 0.96)');
+    g.addColorStop(1, 'rgba(30, 3, 18, 0.97)');
+  } else {
+    g.addColorStop(0, 'rgba(8, 22, 50, 0.95)');
+    g.addColorStop(1, 'rgba(2, 6, 20, 0.97)');
+  }
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = panelColor;
+  ctx.lineWidth = 2.2; ctx.stroke();
+
+  ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.5;
+  const cLen = 18;
+  ctx.beginPath();
+  ctx.moveTo(x + 8, y + cLen); ctx.lineTo(x + 8, y + 8); ctx.lineTo(x + cLen, y + 8);
+  ctx.moveTo(x + panelW - cLen, y + 8); ctx.lineTo(x + panelW - 8, y + 8); ctx.lineTo(x + panelW - 8, y + cLen);
+  ctx.moveTo(x + 8, y + panelH - cLen); ctx.lineTo(x + 8, y + panelH - 8); ctx.lineTo(x + cLen, y + panelH - 8);
+  ctx.moveTo(x + panelW - cLen, y + panelH - 8); ctx.lineTo(x + panelW - 8, y + panelH - 8); ctx.lineTo(x + panelW - 8, y + panelH - cLen);
+  ctx.stroke();
+
+  const fOpt = 15;
+  const font = `bold ${fOpt}px system-ui, sans-serif`;
+  const lines = wrapText(e.text, panelW - 26, font);
+  ctx.font = font;
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const lh = Math.round(fOpt * 1.2);
+  const startY = cy - ((lines.length - 1) * lh) / 2 + 2;
+  lines.forEach((ln, i) => ctx.fillText(ln, cx, startY + i * lh));
+
+  ctx.restore();
+}
+
+/* ── LOCK-ON EFFECTS ── */
+function drawLockOnEffects() {
+  for (const lo of lockOnEffects) {
+    if (lo.type === 'playerLock') {
+      const e = lo.enemy;
+      if (!e || !e.alive || e.dying > 0) continue;
+      const lifeRatio = lo.life / lo.maxLife;
+      const alpha = Math.min(1, (1 - lifeRatio) * 4) * Math.min(1, lifeRatio * 5);
+      const cx = e.x, cy = e.y;
+      const pulse = 0.85 + Math.sin(state.gameTime * 18) * 0.15;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const boxSize = 80 * pulse;
+      const half = boxSize / 2;
+      const corner = 18;
+      ctx.translate(cx, cy);
+      ctx.rotate(state.gameTime * 0.5);
+      ctx.strokeStyle = hex2rgba(C.yellow, alpha);
+      ctx.lineWidth = 3.5;
+      ctx.shadowColor = C.yellow; ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.moveTo(-half, -half + corner); ctx.lineTo(-half, -half); ctx.lineTo(-half + corner, -half);
+      ctx.moveTo( half - corner, -half); ctx.lineTo( half, -half); ctx.lineTo( half, -half + corner);
+      ctx.moveTo( half,  half - corner); ctx.lineTo( half,  half); ctx.lineTo( half - corner,  half);
+      ctx.moveTo(-half + corner,  half); ctx.lineTo(-half,  half); ctx.lineTo(-half,  half - corner);
+      ctx.stroke();
+      ctx.restore();
+    } else if (lo.type === 'enemyLock') {
+      const lifeRatio = lo.life / lo.maxLife;
+      const alpha = Math.min(1, lifeRatio * 2);
+      const dash = (state.gameTime * 200) % 20;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = C.red;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 8]);
+      ctx.lineDashOffset = -dash;
+      ctx.shadowColor = C.red;
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.moveTo(lo.sx, lo.sy);
+      ctx.lineTo(lo.tx, lo.ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
+
+      const targetPulse = 0.8 + Math.sin(state.gameTime * 20) * 0.2;
+      const targetR = 40 * targetPulse;
+      ctx.strokeStyle = hex2rgba(C.red, alpha);
+      ctx.lineWidth = 3;
+      ctx.shadowColor = C.red; ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(lo.tx, lo.ty, targetR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(lo.tx - targetR - 8, lo.ty); ctx.lineTo(lo.tx - targetR + 4, lo.ty);
+      ctx.moveTo(lo.tx + targetR - 4, lo.ty); ctx.lineTo(lo.tx + targetR + 8, lo.ty);
+      ctx.moveTo(lo.tx, lo.ty - targetR - 8); ctx.lineTo(lo.tx, lo.ty - targetR + 4);
+      ctx.moveTo(lo.tx, lo.ty + targetR - 4); ctx.lineTo(lo.tx, lo.ty + targetR + 8);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      ctx.restore();
+    }
+  }
+}
+
+/* ── BULLETS ── */
+function drawBullets() {
+  for (const b of bullets) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < b.trail.length; i++) {
+      const t = b.trail[i];
+      const a = t.life / 0.3;
+      const r = 4 * a;
+      const gl = ctx.createRadialGradient(t.x, t.y, 0, t.x, t.y, r * 3);
+      gl.addColorStop(0, `rgba(255, 200, 100, ${a})`);
+      gl.addColorStop(1, 'transparent');
+      ctx.fillStyle = gl;
+      ctx.beginPath(); ctx.arc(t.x, t.y, r * 3, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(Math.atan2(b.vy, b.vx));
+    const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, 22);
+    gl.addColorStop(0, 'rgba(255, 220, 150, 0.9)');
+    gl.addColorStop(0.5, 'rgba(255, 100, 60, 0.5)');
+    gl.addColorStop(1, 'transparent');
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#ffe040';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10, 4, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(2, 0, 5, 2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawEnemyBullets() {
+  for (const eb of enemyBullets) {
+    const angle = eb.rot;
+    ctx.save();
+    ctx.translate(eb.x, eb.y);
+    ctx.rotate(angle);
+
+    ctx.globalCompositeOperation = 'lighter';
+    const gl = ctx.createRadialGradient(0, 0, 0, 0, 0, 42);
+    gl.addColorStop(0, 'rgba(255, 80, 80, 0.85)');
+    gl.addColorStop(0.4, 'rgba(255, 20, 20, 0.5)');
+    gl.addColorStop(1, 'transparent');
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(0, 0, 42, 0, Math.PI*2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+
+    ctx.beginPath();
+    ctx.moveTo(-18, -5);
+    ctx.lineTo(12, -8);
+    ctx.lineTo(20, 0);
+    ctx.lineTo(12, 8);
+    ctx.lineTo(-18, 5);
+    ctx.closePath();
+    const bodyG = ctx.createLinearGradient(-18, 0, 20, 0);
+    bodyG.addColorStop(0, '#400008');
+    bodyG.addColorStop(0.4, '#ff2020');
+    bodyG.addColorStop(0.7, '#ff6060');
+    bodyG.addColorStop(1, '#400008');
+    ctx.fillStyle = bodyG; ctx.fill();
+    ctx.strokeStyle = '#300008';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffd0d0';
+    ctx.beginPath(); ctx.ellipse(2, 0, 6, 2.5, 0, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#ff8080';
+    ctx.beginPath(); ctx.arc(20, 0, 3, 0, Math.PI*2); ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+function drawParticles() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of particles) {
+    const a = Math.max(0, p.life / p.max);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size * a, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawShockwaves() {
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (const sw of shockwaves) {
+    const t = 1 - sw.life / sw.maxLife;
+    ctx.globalAlpha = (1 - t) * 0.8;
+    ctx.strokeStyle = sw.color;
+    ctx.lineWidth = 4 * (1 - t) + 1;
+    ctx.beginPath(); ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPopups() {
+  for (const p of popups) {
+    const a = Math.max(0, p.life / p.maxLife);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.font = `bold ${p.size}px system-ui, sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color; ctx.shadowBlur = 12;
+    ctx.fillText(p.text, p.x, p.y);
+    ctx.restore();
+  }
+}
+
+/* ── HUD ── */
+function drawHUD() {
+  const barH = 80;
+  const barGrad = ctx.createLinearGradient(0, 0, 0, barH);
+  barGrad.addColorStop(0, 'rgba(5, 15, 40, 0.9)');
+  barGrad.addColorStop(1, 'rgba(5, 15, 40, 0)');
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(0, 0, W, barH);
+
+  const by = 12, bh = 44, bw = 220;
+  const px = 18;
+
+  roundRect(ctx, px, by, bw, bh, 10);
+  ctx.fillStyle = 'rgba(4, 12, 30, 0.95)';
+  ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.8); ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = `bold 11px system-ui, sans-serif`;
+  ctx.fillStyle = C.cyan;
+  ctx.fillText('◈ SKOR', px + 14, by + 14);
+  ctx.font = `bold 20px system-ui, sans-serif`;
+  ctx.fillStyle = C.white;
+  ctx.fillText(String(state.score).padStart(6, '0'), px + 14, by + 32);
+
+  const cbx = (W - bw) / 2;
+  roundRect(ctx, cbx, by, bw, bh, 10);
+  ctx.fillStyle = 'rgba(20, 20, 70, 0.9)';
+  ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.blue, 0.8); ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.textAlign = 'center';
+  ctx.font = `bold 11px system-ui, sans-serif`;
+  ctx.fillStyle = C.blue;
+  ctx.fillText('◈ LEVEL', W/2, by + 14);
+  ctx.font = `bold 16px system-ui, sans-serif`;
+  ctx.fillStyle = C.white;
+  ctx.fillText(`LV ${state.level}/${TOTAL_LEVELS}  ·  SOAL ${state.qIndex + 1}/${state.levelQuestions.length}`, W/2, by + 32);
+
+  const segW = 28, segH = 16, gap = 6;
+  const totalW = state.maxHp * segW + (state.maxHp - 1) * gap;
+  const startX = W - 18 - totalW;
+  for (let i = 0; i < state.maxHp; i++) {
+    const sx = startX + i * (segW + gap);
+    const on = i < state.hp;
+    roundRect(ctx, sx, by + 8, segW, segH, 4);
+    if (on) {
+      const hg = ctx.createLinearGradient(sx, by, sx, by + bh);
+      hg.addColorStop(0, state.hp <= 2 ? C.pink : C.teal);
+      hg.addColorStop(1, state.hp <= 2 ? '#7a1508' : '#005040');
+      ctx.fillStyle = hg;
+    } else ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  ctx.font = `bold 11px system-ui, sans-serif`;
+  ctx.fillStyle = C.teal;
+  ctx.textAlign = 'right';
+  ctx.fillText('◈ ENERGI', W - 18, by + 32);
+
+  if (state.streak >= 2) {
+    ctx.font = `bold 14px system-ui, sans-serif`;
+    ctx.fillStyle = C.amber;
+    ctx.textAlign = 'center';
+    ctx.shadowColor = C.amber; ctx.shadowBlur = 10;
+    ctx.fillText(`🔥 COMBO ×${state.streak}`, W/2, by + bh + 18);
+    ctx.shadowBlur = 0;
+  }
+}
+
+/* ── QUESTION PANEL ── */
+function drawQuestionPanel() {
+  if (!state.currentQuestion) return;
+  const q = state.currentQuestion;
+  const panelX = W * 0.05;
+  const panelY = H - 110;
+  const panelW = W * 0.90;
+  const panelH = 90;
+
+  ctx.save();
+  ctx.shadowColor = hex2rgba(C.cyan, 0.5); ctx.shadowBlur = 25;
+  roundRect(ctx, panelX, panelY, panelW, panelH, 16);
+  const bgGrad = ctx.createLinearGradient(panelX, panelY, panelX, panelY + panelH);
+  bgGrad.addColorStop(0, 'rgba(8, 24, 56, 0.95)');
+  bgGrad.addColorStop(1, 'rgba(2, 8, 22, 0.97)');
+  ctx.fillStyle = bgGrad; ctx.fill();
+  ctx.shadowBlur = 0;
+
+  const borderGrad = ctx.createLinearGradient(panelX, panelY, panelX + panelW, panelY);
+  borderGrad.addColorStop(0, C.cyan);
+  borderGrad.addColorStop(0.5, C.blue);
+  borderGrad.addColorStop(1, C.purple);
+  ctx.strokeStyle = borderGrad; ctx.lineWidth = 2.5;
+  roundRect(ctx, panelX, panelY, panelW, panelH, 16); ctx.stroke();
+
+  const fHead = 12, fQ = 19;
+  ctx.font = `bold ${fHead}px "Consolas", monospace`;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = C.cyan;
+  ctx.fillText(`◈ SOAL ${state.qIndex + 1}/${state.levelQuestions.length}  ·  LEVEL ${state.level}/${TOTAL_LEVELS}`, panelX + 20, panelY + 10);
+
+  const font = `bold ${fQ}px system-ui, sans-serif`;
+  const lines = wrapText(q.q, panelW - 50, font);
+  ctx.font = font;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = C.white;
+  const textCY = panelY + 50;
+  const lh = 24;
+  const startY = textCY - ((lines.length - 1) * lh) / 2;
+  lines.forEach((ln, i) => ctx.fillText(ln, W/2, startY + i * lh));
+
+  const tBarX = panelX + 20;
+  const tBarY = panelY + panelH - 12;
+  const tBarW = panelW - 40;
+  const tBarH = 6;
+  roundRect(ctx, tBarX, tBarY, tBarW, tBarH, 3);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)'; ctx.fill();
+  const tRatio = clamp(state.timeLeft / state.timeMax, 0, 1);
+  const barColor = tRatio > 0.5 ? C.teal : tRatio > 0.25 ? C.amber : C.pink;
+  if (tRatio > 0) {
+    roundRect(ctx, tBarX, tBarY, tBarW * tRatio, tBarH, 3);
+    ctx.fillStyle = barColor;
+    ctx.fill();
+  }
+  ctx.font = `bold 13px "Consolas", monospace`;
+  ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+  ctx.fillStyle = barColor;
+  ctx.fillText(state.timeLeft.toFixed(1) + 's', panelX + panelW - 20, panelY + 10);
+
+  ctx.restore();
+}
+
+/* ── TOAST ── */
+function drawToast() {
+  if (state.toastTimer <= 0) return;
+  const a = Math.min(1, state.toastTimer / 0.4);
+  ctx.save();
+  ctx.globalAlpha = a;
+  const cx = W/2, cy = H/2 - 80;
+  const fToast = 24;
+  ctx.font = `bold ${fToast}px system-ui, sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const metrics = ctx.measureText(state.toastText);
+  const bw = metrics.width + 70;
+  const bh = fToast + 32;
+  roundRect(ctx, cx - bw/2, cy - bh/2, bw, bh, 12);
+  const tg = ctx.createLinearGradient(cx, cy - bh/2, cx, cy + bh/2);
+  tg.addColorStop(0, 'rgba(10, 30, 60, 0.95)');
+  tg.addColorStop(1, 'rgba(4, 12, 30, 0.95)');
+  ctx.fillStyle = tg; ctx.fill();
+  ctx.strokeStyle = state.toastColor; ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.fillStyle = state.toastColor;
+  ctx.fillText(state.toastText, cx, cy + 2);
+  ctx.restore();
+}
+
+/* ── MENU ── */
+function drawMenu() {
+  const cx = W/2;
+  const t = state.gameTime;
+
+  const bgGrad = ctx.createRadialGradient(cx, H * 0.38, 60, cx, H * 0.55, H * 1.20);
+  bgGrad.addColorStop(0, 'rgba(6, 30, 66, 0.72)');
+  bgGrad.addColorStop(0.50, 'rgba(3, 15, 36, 0.82)');
+  bgGrad.addColorStop(1, 'rgba(1, 4, 12, 0.92)');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.globalAlpha = 0.05;
+  ctx.strokeStyle = C.cyan;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x < W; x += 64) { ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+  for (let y = 0; y < H; y += 64) { ctx.moveTo(0, y); ctx.lineTo(W, y); }
+  ctx.stroke();
+  ctx.restore();
+
+  const badge = '◈  MIRAGE KRONOLOGI  ·  BAB 3 PERISTIWA LOKAL, NASIONAL, GLOBAL  ◈';
+  ctx.font = `bold 13px system-ui, sans-serif`;
+  const bw = ctx.measureText(badge).width + 46;
+  const bh = 32;
+  const bx = cx - bw/2, by = 50;
+  roundRect(ctx, bx, by, bw, bh, bh/2);
+  ctx.fillStyle = 'rgba(0, 200, 255, 0.08)'; ctx.fill();
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.45); ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = hex2rgba(C.cyan, 0.95);
+  ctx.fillText(badge, cx, by + bh/2 + 1);
+
+  const tg = ctx.createLinearGradient(cx - W*0.35, 0, cx + W*0.35, 0);
+  tg.addColorStop(0, '#00d0ff');
+  tg.addColorStop(0.28, '#bff2ff');
+  tg.addColorStop(0.50, '#ffffff');
+  tg.addColorStop(0.74, '#7fc4ff');
+  tg.addColorStop(1, '#9b8cff');
+  ctx.font = `900 ${Math.min(Math.round(72 * Math.min(uiScale, 1.12)), W * 0.066)}px system-ui, sans-serif`;
+  ctx.fillStyle = tg;
+  ctx.shadowColor = hex2rgba(C.cyan, 0.55);
+  ctx.shadowBlur = 26;
+  ctx.fillText('MIRAGE KRONOLOGI', cx, 130);
+  ctx.shadowBlur = 0;
+
+  ctx.font = `600 16px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.white, 0.72);
+  ctx.fillText('Bab 3: Peristiwa Lokal, Nasional, Global — 6 Level · 90 Soal Unik', cx, 172);
+
+  const cards = [
+    { icon: '🎯', title: '6 LEVEL', desc: 'Materi bertingkat' },
+    { icon: '📚', title: '90 SOAL', desc: 'Unik & beragam pola' },
+    { icon: '🛡️', title: 'PERISAI HIJAU', desc: 'Tahan tembakan musuh' },
+    { icon: '✈️', title: 'SUKHOI MUSUH', desc: 'Su-27 · Su-34 · Su-57' },
+  ];
+  const cGap = 16;
+  const cAllW = Math.min(W * 0.90, 1100);
+  const cardW = (cAllW - cGap * 3) / 4;
+  const cardH = 100;
+  const cardY = 220;
+  const cardX0 = cx - cAllW / 2;
+
+  cards.forEach((c, i) => {
+    const x = cardX0 + i * (cardW + cGap);
+    roundRect(ctx, x, cardY, cardW, cardH, 12);
+    const cg = ctx.createLinearGradient(x, cardY, x, cardY + cardH);
+    cg.addColorStop(0, 'rgba(10, 34, 70, 0.85)');
+    cg.addColorStop(1, 'rgba(4, 14, 34, 0.92)');
+    ctx.fillStyle = cg; ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.cyan, 0.35); ctx.lineWidth = 1.4; ctx.stroke();
+
+    ctx.font = '32px system-ui, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = C.cyan;
+    ctx.fillText(c.icon, x + cardW/2, cardY + 32);
+
+    ctx.font = `bold 15px system-ui, sans-serif`;
+    ctx.fillStyle = C.white;
+    ctx.fillText(c.title, x + cardW/2, cardY + 64);
+
+    ctx.font = '11.5px system-ui, sans-serif';
+    ctx.fillStyle = hex2rgba(C.white, 0.58);
+    ctx.fillText(c.desc, x + cardW/2, cardY + 84);
+  });
+
+  ctx.font = `bold 12px system-ui, sans-serif`;
+  ctx.fillStyle = hex2rgba(C.cyan, 0.85);
+  ctx.textAlign = 'center';
+  ctx.fillText('—   C A R A   B E R M A I N   —', cx, 360);
+
+  const steps = [
+    { n: '1', title: 'BACA SOAL', desc: 'Pertanyaan tampil di panel bawah.' },
+    { n: '2', title: 'TEMBAK MUSUH', desc: 'Ketuk pesawat Sukhoi dengan jawaban benar.' },
+    { n: '3', title: 'LINDUNGI DIRI', desc: 'Perisai hijau tahan peluru merah musuh.' },
+  ];
+  const sGap = 16;
+  const sAllW = Math.min(W * 0.90, 1100);
+  const stepW = (sAllW - sGap * 2) / 3;
+  const stepH = 90;
+  const stepY = 385;
+  const stepX0 = cx - sAllW / 2;
+
+  steps.forEach((s, i) => {
+    const x = stepX0 + i * (stepW + sGap);
+    roundRect(ctx, x, stepY, stepW, stepH, 12);
+    const sg = ctx.createLinearGradient(x, stepY, x, stepY + stepH);
+    sg.addColorStop(0, 'rgba(8, 26, 58, 0.80)');
+    sg.addColorStop(1, 'rgba(3, 11, 28, 0.88)');
+    ctx.fillStyle = sg; ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.blue, 0.32); ctx.lineWidth = 1.3; ctx.stroke();
+
+    const nx = x + 38, ny = stepY + stepH/2;
+    ctx.beginPath(); ctx.arc(nx, ny, 18, 0, Math.PI*2);
+    const ng = ctx.createLinearGradient(nx-18, ny-18, nx+18, ny+18);
+    ng.addColorStop(0, hex2rgba(C.cyan, 0.35));
+    ng.addColorStop(1, hex2rgba(C.blue, 0.25));
+    ctx.fillStyle = ng; ctx.fill();
+    ctx.strokeStyle = hex2rgba(C.cyan, 0.80); ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.font = `bold 18px system-ui, sans-serif`;
+    ctx.fillStyle = C.white;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = C.cyan; ctx.shadowBlur = 10;
+    ctx.fillText(s.n, nx, ny + 1);
+    ctx.shadowBlur = 0;
+
+    ctx.textAlign = 'left';
+    ctx.font = `bold 14px system-ui, sans-serif`;
+    ctx.fillStyle = C.white;
+    ctx.fillText(s.title, x + 70, stepY + 34);
+
+    const dl = wrapText(s.desc, stepW - 88, '11.5px system-ui, sans-serif');
+    ctx.font = '11.5px system-ui, sans-serif';
+    ctx.fillStyle = hex2rgba(C.white, 0.58);
+    dl.slice(0, 2).forEach((ln, k) => {
+      ctx.fillText(ln, x + 70, stepY + 56 + k * 16);
+    });
+  });
+
+  const pulse = 0.5 + Math.sin(t * 3) * 0.5;
+  const btnW = Math.min(560, W * 0.46);
+  const btnH = 72;
+  const btnX = cx - btnW/2;
+  const btnY = 510;
+
+  ctx.save();
+  ctx.shadowColor = hex2rgba(C.cyan, 0.55 + pulse * 0.35);
+  ctx.shadowBlur = 24 + pulse * 18;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 16);
+  const bgi = ctx.createLinearGradient(btnX, btnY, btnX + btnW, btnY + btnH);
+  bgi.addColorStop(0, 'rgba(0, 190, 255, 0.30)');
+  bgi.addColorStop(0.50, 'rgba(60, 120, 255, 0.45)');
+  bgi.addColorStop(1, 'rgba(120, 90, 255, 0.30)');
+  ctx.fillStyle = bgi; ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = hex2rgba(C.cyan, 0.95);
+  ctx.lineWidth = 2.6;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 16);
+  ctx.stroke();
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `bold 24px system-ui, sans-serif`;
+  ctx.fillStyle = C.white;
+  ctx.shadowColor = hex2rgba(C.cyan, 0.9);
+  ctx.shadowBlur = 14;
+  ctx.fillText('▶  MULAI PERTEMPURAN', cx, btnY + btnH/2 + 1);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '11px system-ui, sans-serif';
+  ctx.fillStyle = hex2rgba(C.white, 0.35);
+  ctx.fillText('Materi: Bab 3 Peristiwa Lokal, Nasional, Global', cx, 630);
+}
+
+function drawGameOver() {
+  const cx = W/2;
+  ctx.save();
+  const bgGrad = ctx.createRadialGradient(cx, H/2, 100, cx, H/2, H);
+  bgGrad.addColorStop(0, 'rgba(50, 5, 30, 0.92)');
+  bgGrad.addColorStop(1, 'rgba(8, 0, 12, 0.97)');
+  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `bold 64px system-ui, sans-serif`;
+  ctx.fillStyle = C.pink;
+  ctx.shadowColor = C.pink; ctx.shadowBlur = 30;
+  ctx.fillText('MISI GAGAL', cx, 180);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '18px system-ui, sans-serif';
+  ctx.fillStyle = hex2rgba(C.white, 0.75);
+  ctx.fillText(`Skor Akhir: ${state.score}`, cx, 260);
+  ctx.fillText(`Level Tercapai: ${state.level}/${TOTAL_LEVELS}`, cx, 295);
+  ctx.fillText(`Jawaban Benar: ${state.correctTotal}`, cx, 330);
+  ctx.fillText(`Jawaban Salah: ${state.wrongTotal}`, cx, 365);
+  ctx.fillText(`Combo Terbaik: ${state.bestStreak}×`, cx, 400);
+
+  const blink = 0.7 + Math.sin(state.gameTime * 4) * 0.3;
+  ctx.globalAlpha = blink;
+  const btnW = Math.min(500, W * 0.42), btnH = 64;
+  const btnX = cx - btnW/2, btnY = 470;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 14);
+  ctx.fillStyle = hex2rgba(C.cyan, 0.3); ctx.fill();
+  ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8; ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.font = `bold 22px system-ui, sans-serif`;
+  ctx.fillStyle = C.white;
+  ctx.fillText('▶  COBA LAGI  ◀', cx, btnY + btnH/2);
+  ctx.restore();
+}
+
+function drawVictory() {
+  const cx = W/2;
+  ctx.save();
+  const bgGrad = ctx.createRadialGradient(cx, H/2, 100, cx, H/2, H);
+  bgGrad.addColorStop(0, 'rgba(5, 45, 40, 0.92)');
+  bgGrad.addColorStop(1, 'rgba(0, 12, 10, 0.97)');
+  ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `bold 64px system-ui, sans-serif`;
+  ctx.fillStyle = C.teal;
+  ctx.shadowColor = C.teal; ctx.shadowBlur = 30;
+  ctx.fillText('MISI SUKSES!', cx, 180);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '18px system-ui, sans-serif';
+  ctx.fillStyle = hex2rgba(C.white, 0.75);
+  ctx.fillText(`Skor Akhir: ${state.score}`, cx, 260);
+  ctx.fillText(`Semua ${TOTAL_LEVELS} level & ${TOTAL_LEVELS * QUESTIONS_PER_LEVEL} soal diselesaikan!`, cx, 295);
+  ctx.fillText(`Jawaban Benar: ${state.correctTotal}`, cx, 330);
+  ctx.fillText(`Jawaban Salah: ${state.wrongTotal}`, cx, 365);
+  ctx.fillText(`Combo Terbaik: ${state.bestStreak}×`, cx, 400);
+
+  const blink = 0.7 + Math.sin(state.gameTime * 4) * 0.3;
+  ctx.globalAlpha = blink;
+  const btnW = Math.min(500, W * 0.42), btnH = 64;
+  const btnX = cx - btnW/2, btnY = 470;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 14);
+  ctx.fillStyle = hex2rgba(C.teal, 0.3); ctx.fill();
+  ctx.strokeStyle = C.teal; ctx.lineWidth = 2.8; ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.font = `bold 22px system-ui, sans-serif`;
+  ctx.fillStyle = C.white;
+  ctx.fillText('▶  MAIN LAGI  ◀', cx, btnY + btnH/2);
+  ctx.restore();
+}
+
+/* ── MAIN RENDER ── */
+function render() {
+  ctx.setTransform(baseScale, 0, 0, baseScale, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  ctx.save();
+  if (state.shake > 0) ctx.translate((Math.random()-0.5) * state.shake, (Math.random()-0.5) * state.shake);
+
+  drawBackground();
+
+  if (state.mode === 'playing') {
+    for (const e of enemies) drawEnemyPanel(e);
+    for (const e of enemies) drawEnemy(e);
+    drawLockOnEffects();
+    drawEnemyBullets();
+    drawBullets();
+    drawPlayer();
+    drawShockwaves();
+    drawParticles();
+    drawPopups();
+    drawHUD();
+    drawQuestionPanel();
+    drawToast();
+  }
+
+  ctx.restore();
+
+  if (state.flashRed > 0) { ctx.fillStyle = hex2rgba(C.pink, state.flashRed*0.3); ctx.fillRect(0,0,W,H); }
+  if (state.flashGreen > 0) { ctx.fillStyle = hex2rgba(C.teal, state.flashGreen*0.2); ctx.fillRect(0,0,W,H); }
+  if (state.flashBlue > 0) { ctx.fillStyle = hex2rgba(C.cyan, state.flashBlue*0.25); ctx.fillRect(0,0,W,H); }
+
+  const vg = ctx.createRadialGradient(W/2, H/2, H*0.4, W/2, H/2, H*0.95);
+  vg.addColorStop(0, 'transparent');
+  vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+
+  if (state.mode === 'menu') drawMenu();
+  if (state.mode === 'over') drawGameOver();
+  if (state.mode === 'victory') drawVictory();
+}
+
+/* ═══════════ GAME LOOP ═══════════ */
+let lastTs = 0;
+function loop(ts) {
+  if (!lastTs) lastTs = ts;
+  let dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  if (dt > 0.05) dt = 0.05;
+  if (dt < 0) dt = 0;
+  if (document.body.classList.contains('portrait-locked')) { requestAnimationFrame(loop); return; }
+  update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+function canvasCoords(clientX, clientY) {
+  const r = cvs.getBoundingClientRect();
+  return { x: (clientX - r.left) * (W / r.width), y: (clientY - r.top) * (H / r.height) };
+}
+
+function startGame() {
+  initAudio();
+  state.score = 0;
+  state.hp = state.maxHp;
+  state.streak = 0;
+  state.bestStreak = 0;
+  state.correctTotal = 0;
+  state.wrongTotal = 0;
+  state.qIndex = 0;
+  state.level = 1;
+  state.mode = 'playing';
+  state.locked = false;
+  state.roundActive = false;
+  state.nextRoundIn = 0;
+  enemies.length = 0;
+  bullets.length = 0;
+  enemyBullets.length = 0;
+  particles.length = 0;
+  shockwaves.length = 0;
+  popups.length = 0;
+  lockOnEffects.length = 0;
+
+  player.baseX = 160;
+  player.baseY = H / 2;
+  player.x = player.baseX;
+  player.y = player.baseY;
+  player.patrolRangeX = Math.min(80, W * 0.07);
+  player.patrolRangeY = Math.min(150, H * 0.2);
+  player.phaseX = 0;
+  player.phaseY = 0;
+  player.recoil = 0;
+  player.bank = 0;
+
+  startLevel(1);
+
+  tone(520, 0.1, 'triangle', 0.055, 880);
+  tone(780, 0.14, 'triangle', 0.055, 1200, 0.1);
+  tone(1040, 0.18, 'sine', 0.045, 1560, 0.22);
+}
+
+cvs.addEventListener('pointerdown', (evt) => {
+  evt.preventDefault();
+  initAudio();
+  if (state.mode === 'menu' || state.mode === 'over' || state.mode === 'victory') {
+    startGame();
+    return;
+  }
+  if (state.mode !== 'playing') return;
+  if (state.locked || !state.roundActive) return;
+
+  const { x, y } = canvasCoords(evt.clientX, evt.clientY);
+
+  for (let i = 0; i < enemies.length; i++) {
+    const e = enemies[i];
+    if (!e.alive || e.dying > 0 || e.fleeing || e.entering) continue;
+    const shipR = 70;
+    const inShip = x >= e.x - shipR && x <= e.x + shipR && y >= e.y - shipR && y <= e.y + shipR;
+    const panelW = Math.min(W * 0.20, 260);
+    const panelH = 82;
+    const panelCY = e.y + 58;
+    const inPanel = x >= e.x - panelW/2 - 20 && x <= e.x + panelW/2 + 20
+                 && y >= panelCY - panelH/2 - 15 && y <= panelCY + panelH/2 + 15;
+    if (inShip || inPanel) { fire(i); return; }
+  }
+}, { passive: false });
+
+cvs.addEventListener('contextmenu', (e) => e.preventDefault());
+
+window.addEventListener('keydown', (evt) => {
+  initAudio();
+  if (evt.code === 'Space' || evt.code === 'Enter') {
+    evt.preventDefault();
+    if (state.mode !== 'playing') startGame();
+  }
+});
+
+window.addEventListener('blur', () => { lastTs = 0; });
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+
+/* ═══════════ BOOT ═══════════ */
+requestAnimationFrame(() => {
+  resize();
+  requestAnimationFrame(loop);
+});
+setTimeout(resize, 150);
+setTimeout(resize, 500);
+
+</script>
+</body>
+</html>
