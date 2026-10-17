@@ -3,168 +3,497 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pesawat Tempur IPS</title>
+  <title>Pesawat Tempur Sejarah — Game Edukasi IPS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: Arial, sans-serif;
+      font-family: 'Inter', Arial, sans-serif;
     }
 
     html {
-      scroll-behavior: smooth; /* scroll halus */
+      scroll-behavior: smooth;
     }
 
     body {
       background: #07111f;
       color: white;
+      overflow-x: hidden;
+      position: relative;
     }
 
+    /* ========== BACKGROUND EFFECTS ========== */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    }
+
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.45;
+    }
+    .orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, #0ea5e9, transparent 70%);
+      top: -150px; left: -150px;
+      animation: float1 18s ease-in-out infinite;
+    }
+    .orb-2 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, #6366f1, transparent 70%);
+      bottom: -200px; right: -200px;
+      animation: float2 22s ease-in-out infinite;
+    }
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(80px, 60px); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(-100px, -80px); }
+    }
+
+    /* ========== HEADER ========== */
     header {
-      padding: 20px 8%;
+      padding: 16px 8%;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #0b1b30;
+      background: rgba(11, 27, 48, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       position: sticky;
       top: 0;
       z-index: 100;
+      border-bottom: 1px solid #1b3b5d;
     }
 
     .logo {
-      font-size: 24px;
-      font-weight: bold;
+      font-size: 20px;
+      font-weight: 800;
       color: #38bdf8;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
     }
 
     nav a {
       color: white;
       text-decoration: none;
-      margin-left: 25px;
+      margin-left: 28px;
+      font-weight: 600;
+      font-size: 14px;
+      opacity: 0.85;
+      transition: 0.2s;
     }
-
     nav a:hover {
       color: #38bdf8;
+      opacity: 1;
     }
 
+    /* ========== HERO ========== */
     .hero {
-      min-height: 85vh;
+      min-height: 82vh;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 60px 8%;
-      background: linear-gradient(135deg, #07111f, #12365a);
+      position: relative;
+      z-index: 1;
+      gap: 40px;
     }
 
     .hero-text {
-      max-width: 550px;
+      max-width: 580px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 100px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 12px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
     }
 
     .hero-text h1 {
-      font-size: 55px;
-      margin-bottom: 20px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 60px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 22px;
     }
 
     .hero-text h1 span {
-      color: #38bdf8;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .hero-text p {
-      font-size: 18px;
-      line-height: 1.6;
-      color: #d1d5db;
-      margin-bottom: 30px;
+      font-size: 17px;
+      line-height: 1.65;
+      color: #cbd5e1;
+      margin-bottom: 32px;
+      max-width: 520px;
     }
 
     .btn {
-      display: inline-block;
-      padding: 14px 28px;
-      background: #0ea5e9;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #0ea5e9, #0284c7);
       color: white;
       text-decoration: none;
-      border-radius: 10px;
-      font-weight: bold;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 15px;
       transition: 0.3s;
       cursor: pointer;
       border: none;
-      font-size: 16px;
+      box-shadow: 0 10px 28px rgba(14, 165, 233, 0.35);
     }
 
     .btn:hover {
-      background: #0284c7;
-      transform: scale(1.05);
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px rgba(14, 165, 233, 0.5);
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 36px;
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid #1b3b5d;
+    }
+
+    .stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-lbl {
+      color: #94a3b8;
+      font-size: 11.5px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
 
     .plane {
-      font-size: 180px;
+      font-size: 200px;
       animation: terbang 3s infinite ease-in-out;
+      filter: drop-shadow(0 0 60px rgba(56, 189, 248, 0.5));
+      z-index: 2;
     }
 
     @keyframes terbang {
-      0%, 100% {
-        transform: translateY(0) rotate(-5deg);
-      }
-      50% {
-        transform: translateY(-20px) rotate(5deg);
-      }
+      0%, 100% { transform: translateY(0) rotate(-5deg); }
+      50% { transform: translateY(-24px) rotate(5deg); }
     }
 
+    /* ========== SUBJECTS / LEVELS ========== */
     .subjects {
-      padding: 70px 8%;
+      padding: 80px 8% 100px;
       text-align: center;
-      background: #0b1b30;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-label {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
     }
 
     .subjects h2 {
-      font-size: 35px;
-      margin-bottom: 40px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 16px;
+    }
+
+    .subjects .desc {
+      color: #94a3b8;
+      max-width: 560px;
+      margin: 0 auto 50px;
+      font-size: 15.5px;
+      line-height: 1.7;
     }
 
     .cards {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+      max-width: 1180px;
+      margin: 0 auto;
+      text-align: left;
     }
 
     .card {
-      padding: 30px 20px;
-      background: #132941;
-      border-radius: 15px;
-      transition: 0.3s;
+      padding: 32px 28px;
+      background: linear-gradient(160deg, #0b1b30 0%, #0a1626 100%);
+      border-radius: 20px;
+      transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none;
       color: white;
       display: block;
       cursor: pointer;
-      border: 2px solid transparent;
+      border: 1px solid #1b3b5d;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.18), transparent 70%);
+      top: -100px;
+      right: -100px;
+      opacity: 0;
+      transition: 0.5s;
+      pointer-events: none;
     }
 
     .card:hover {
       transform: translateY(-8px);
-      background: #1b3b5d;
       border-color: #38bdf8;
+      box-shadow:
+        0 24px 48px -12px rgba(14, 165, 233, 0.3),
+        0 0 0 1px rgba(56, 189, 248, 0.15) inset;
     }
 
-    .card .icon {
-      font-size: 45px;
-      margin-bottom: 15px;
+    .card:hover::after {
+      opacity: 1;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 22px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(99, 102, 241, 0.15));
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: 0.4s;
+    }
+
+    .card:hover .card-icon {
+      transform: scale(1.1) rotate(-6deg);
+      box-shadow: 0 8px 24px rgba(14, 165, 233, 0.4);
+    }
+
+    .card-level {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.12em;
+      padding: 5px 12px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
     }
 
     .card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
       margin-bottom: 10px;
+      color: white;
+      letter-spacing: -0.01em;
+      position: relative;
+      z-index: 1;
+      transition: 0.3s;
+    }
+
+    .card:hover h3 {
       color: #38bdf8;
     }
 
     .card p {
-      color: #cbd5e1;
+      color: #94a3b8;
+      font-size: 13.5px;
+      line-height: 1.6;
+      margin-bottom: 18px;
+      position: relative;
+      z-index: 1;
     }
 
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #38bdf8;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: 0.35s;
+      position: relative;
+      z-index: 1;
+    }
+
+    .card:hover .card-footer {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ========== CTA SECTION ========== */
+    .cta-section {
+      padding: 20px 8% 90px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-box {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 60px 40px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(19, 41, 65, 0.85), rgba(15, 35, 55, 0.85));
+      border: 1px solid #2a4a6a;
+      border-radius: 28px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(56, 189, 248, 0.18), transparent 30%);
+      animation: rotate 9s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-box h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 14px;
+    }
+
+    .cta-box p {
+      color: #cbd5e1;
+      font-size: 15.5px;
+      margin-bottom: 28px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.7;
+    }
+
+    /* ========== FOOTER ========== */
     footer {
       text-align: center;
-      padding: 25px;
+      padding: 28px;
       background: #050c16;
-      color: #94a3b8;
+      color: #64748b;
+      font-size: 13px;
+      border-top: 1px solid #1b3b5d;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 1000px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 800px) {
@@ -172,28 +501,59 @@
         flex-direction: column;
         text-align: center;
         gap: 40px;
+        padding: 50px 8%;
+        min-height: auto;
       }
 
       .hero-text h1 {
         font-size: 40px;
       }
 
-      .plane {
-        font-size: 100px;
+      .hero-text p {
+        margin-left: auto;
+        margin-right: auto;
       }
 
-      .cards {
-        grid-template-columns: 1fr 1fr;
+      .hero-stats {
+        justify-content: center;
+      }
+
+      .plane {
+        font-size: 110px;
       }
 
       nav {
         display: none;
       }
+
+      .subjects {
+        padding: 60px 6% 80px;
+      }
+
+      .subjects h2 {
+        font-size: 30px;
+      }
+
+      .cta-box {
+        padding: 44px 24px;
+      }
+
+      .cta-box h2 {
+        font-size: 26px;
+      }
     }
 
-    @media (max-width: 500px) {
+    @media (max-width: 550px) {
       .cards {
         grid-template-columns: 1fr;
+      }
+
+      .hero-text h1 {
+        font-size: 34px;
+      }
+
+      .logo span.logo-text {
+        display: none;
       }
     }
   </style>
@@ -201,82 +561,164 @@
 
 <body>
 
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+
+  <!-- ========== HEADER ========== -->
   <header>
-    <div class="logo">✈️ PESAWAT TEMPUR IPS</div>
+    <div class="logo">
+      <div class="logo-icon">✈️</div>
+      <span class="logo-text">PESAWAT TEMPUR SEJARAH</span>
+    </div>
 
     <nav>
       <a href="#beranda">Beranda</a>
-      <a href="#materi">Materi</a>
-      <a href="#main">Mulai Game</a>
+      <a href="#level">Level Game</a>
+      <a href="#main">Mulai Misi</a>
     </nav>
   </header>
 
+  <!-- ========== HERO ========== -->
   <section class="hero" id="beranda">
     <div class="hero-text">
-      <h1>Belajar IPS dengan <span>Seru!</span></h1>
+      <div class="hero-badge">
+        <span class="dot"></span>
+        <span>6 Level Sejarah · Siap Bertempur</span>
+      </div>
+
+      <h1>Terbang &amp; Taklukkan <span>Misi Sejarah!</span></h1>
 
       <p>
-        Terbang, bertempur, dan uji pengetahuanmu
-        tentang ekonomi, sejarah, geografi, dan sosiologi
-        dalam game Pesawat Tempur IPS.
+        Naik ke pesawat tempur, jelajahi langit Nusantara, dan uji pengetahuan sejarahmu.
+        Setiap level adalah misi berbeda — dari konsep dasar sejarah, toponimi, jalur rempah,
+        hingga asal-usul nenek moyang. Siap jadi Pilot Sejarah?
       </p>
 
-      <!-- Tombol langsung scroll ke Materi, tanpa popup -->
-      <a href="#materi" class="btn">
+      <a href="#level" class="btn">
         🚀 Mulai Bermain
       </a>
+
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num">6</div>
+          <div class="stat-lbl">Level Misi</div>
+        </div>
+        <div>
+          <div class="stat-num">60+</div>
+          <div class="stat-lbl">Soal Game</div>
+        </div>
+        <div>
+          <div class="stat-num">Fase D</div>
+          <div class="stat-lbl">SMP/MTs</div>
+        </div>
+      </div>
     </div>
 
     <div class="plane">✈️</div>
   </section>
 
-  <section class="subjects" id="materi">
-    <h2>📚 Materi IPS</h2>
+  <!-- ========== LEVELS / GAMES ========== -->
+  <section class="subjects" id="level">
+    <div class="section-label">🎮 PILIH LEVEL MISI</div>
+    <h2>6 Level Game Sejarah</h2>
+    <p class="desc">
+      Setiap level adalah misi berbeda — pilih level mana yang ingin kamu taklukkan
+      dan raih skor tertinggi!
+    </p>
 
     <div class="cards">
 
-      <a href="https://ruangips.github.io/pesawattempur/ekonomi.html" class="card">
-        <div class="icon">💰</div>
-        <h3>Ekonomi</h3>
-        <p>Uji pengetahuan tentang kegiatan ekonomi dan kehidupan masyarakat.</p>
+      <!-- LEVEL 1 -->
+      <a href="https://ruangips.github.io/pesawattempur/sejarah-game-bab1.html" class="card">
+        <div class="card-header">
+          <div class="card-icon">🧭</div>
+          <span class="card-level">LEVEL 1</span>
+        </div>
+        <h3>Konsep Dasar Ilmu Sejarah</h3>
+        <p>Uji pemahaman tentang manusia, ruang, waktu, kronologi, dan perubahan.</p>
+        <div class="card-footer">Mulai misi <span>→</span></div>
       </a>
 
-      <a href="https://ruangips.github.io/pesawattempur/sejarah.html" class="card">
-        <div class="icon">🏛️</div>
-        <h3>Sejarah</h3>
-        <p>Kenali berbagai peristiwa penting dalam sejarah.</p>
+      <!-- LEVEL 2 -->
+      <a href="https://ruangips.github.io/pesawattempur/sejarah-game-bab2.html" class="card">
+        <div class="card-header">
+          <div class="card-icon">📍</div>
+          <span class="card-level">LEVEL 2</span>
+        </div>
+        <h3>Sejarah Lokal &amp; Toponimi</h3>
+        <p>Tebak asal-usul nama tempat dan uji pengetahuan sejarah daerahmu.</p>
+        <div class="card-footer">Mulai misi <span>→</span></div>
       </a>
 
-      <a href="https://ruangips.github.io/pesawattempur/geografi.html" class="card">
-        <div class="icon">🌍</div>
-        <h3>Geografi</h3>
-        <p>Jelajahi pengetahuan tentang bumi, wilayah, dan lingkungan.</p>
+      <!-- LEVEL 3 -->
+      <a href="https://ruangips.github.io/pesawattempur/sejarah-game-bab3.html" class="card">
+        <div class="card-header">
+          <div class="card-icon">🌐</div>
+          <span class="card-level">LEVEL 3</span>
+        </div>
+        <h3>Peristiwa Lokal, Nasional, Global</h3>
+        <p>Klasifikasikan peristiwa sejarah dan hubungkan sebab-akibatnya.</p>
+        <div class="card-footer">Mulai misi <span>→</span></div>
       </a>
 
-      <a href="https://ruangips.github.io/pesawattempur/sosiologi.html" class="card">
-        <div class="icon">👥</div>
-        <h3>Sosiologi</h3>
-        <p>Pelajari kehidupan sosial dan interaksi dalam masyarakat.</p>
+      <!-- LEVEL 4 -->
+      <a href="https://ruangips.github.io/pesawattempur/sejarah-game-bab4.html" class="card">
+        <div class="card-header">
+          <div class="card-icon">🧬</div>
+          <span class="card-level">LEVEL 4</span>
+        </div>
+        <h3>Asal-Usul Nenek Moyang</h3>
+        <p>Jelajahi jalur migrasi Austronesia dan warisan Proto &amp; Deutro Melayu.</p>
+        <div class="card-footer">Mulai misi <span>→</span></div>
+      </a>
+
+      <!-- LEVEL 5 -->
+      <a href="https://ruangips.github.io/pesawattempur/sejarah-game-bab5.html" class="card">
+        <div class="card-header">
+          <div class="card-icon">🌿</div>
+          <span class="card-level">LEVEL 5</span>
+        </div>
+        <h3>Jalur Rempah Nusantara</h3>
+        <p>Kawal kapal rempah dari Maluku, hadapi VOC, dan kuasai jalur dunia.</p>
+        <div class="card-footer">Mulai misi <span>→</span></div>
+      </a>
+
+      <!-- LEVEL 6 -->
+      <a href="https://ruangips.github.io/pesawattempur/sejarah-game-bab6.html" class="card">
+        <div class="card-header">
+          <div class="card-icon">💡</div>
+          <span class="card-level">LEVEL 6</span>
+        </div>
+        <h3>Keterampilan Proses &amp; Asesmen</h3>
+        <p>Uji keterampilan mengamati, menanya, mengolah, dan merefleksi sejarah.</p>
+        <div class="card-footer">Mulai misi <span>→</span></div>
       </a>
 
     </div>
   </section>
 
-  <section class="subjects" id="main">
-    <h2>🎮 Siap Menjadi Pilot IPS?</h2>
-
-    <p style="margin-bottom: 25px; color:#cbd5e1;">
-      Pilih salah satu materi di atas untuk mulai bermain!
-    </p>
-
-    <!-- Tombol juga scroll ke Materi, tanpa popup -->
-    <a href="#materi" class="btn">
-      🚀 PILIH MATERI
-    </a>
+  <!-- ========== CTA ========== -->
+  <section class="cta-section" id="main">
+    <div class="cta-box">
+      <div class="cta-content">
+        <h2>🎯 Siap Menjadi Pilot Sejarah?</h2>
+        <p>
+          Pilih level di atas dan mulai bertempur di langit sejarah.
+          Setiap jawaban benar = poin. Setiap jawaban salah = pelajaran berharga.
+          Kumpulkan skor tertinggi dan jadilah pilot legendaris!
+        </p>
+        <a href="#level" class="btn">
+          🚀 PILIH LEVEL
+        </a>
+      </div>
+    </div>
   </section>
 
+  <!-- ========== FOOTER ========== -->
   <footer>
-    © 2026 Pesawat Tempur IPS | Game Edukasi
+    © 2026 Pesawat Tempur Sejarah · Game Edukasi IPS · Fase D Kurikulum Merdeka
   </footer>
 
 </body>
